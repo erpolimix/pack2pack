@@ -8,6 +8,7 @@ export interface Pack {
     originalPrice: number;
     imageUrl: string;
     sellerName: string;
+    seller_id: string;
     location: string;
     distance: string;
     expiresAt: string;
@@ -34,6 +35,7 @@ export const packService = {
             originalPrice: Number(p.original_price),
             imageUrl: p.image_url,
             sellerName: p.seller_name,
+            seller_id: p.seller_id,
             location: p.location,
             distance: p.distance,
             expiresAt: p.expires_at,
@@ -61,6 +63,7 @@ export const packService = {
             originalPrice: Number(data.original_price),
             imageUrl: data.image_url,
             sellerName: data.seller_name,
+            seller_id: data.seller_id,
             location: data.location,
             distance: data.distance,
             expiresAt: data.expires_at,
@@ -68,7 +71,7 @@ export const packService = {
         }
     },
 
-    async createPack(pack: Omit<Pack, "id" | "expiresAt">) {
+    async createPack(pack: Omit<Pack, "id" | "expiresAt" | "seller_id">) {
         // Get real user
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) throw new Error("Must be logged in to create a pack")
@@ -135,6 +138,65 @@ export const packService = {
         const { error } = await supabase
             .from('packs')
             .delete()
+            .eq('id', packId)
+
+        if (error) throw error
+    },
+
+    async getPacksByUser(userId: string): Promise<Pack[]> {
+        const { data, error } = await supabase
+            .from('packs')
+            .select('*')
+            .eq('seller_id', userId)
+            .order('created_at', { ascending: false })
+
+        if (error) {
+            console.error("Error fetching packs by user:", error)
+            return []
+        }
+
+        return (data || []).map(p => ({
+            id: p.id,
+            title: p.title,
+            description: p.description,
+            price: Number(p.price),
+            originalPrice: Number(p.original_price),
+            imageUrl: p.image_url,
+            sellerName: p.seller_name,
+            seller_id: p.seller_id,
+            location: p.location,
+            distance: p.distance,
+            expiresAt: p.expires_at,
+            tags: p.tags || [],
+        }))
+    },
+
+    async updatePack(packId: string, pack: Partial<Pack>) {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) throw new Error("Must be logged in to update")
+
+        const { data: existingPack } = await supabase
+            .from('packs')
+            .select('seller_id')
+            .eq('id', packId)
+            .single()
+
+        if (!existingPack) throw new Error("Pack not found")
+        if (existingPack.seller_id !== user.id) {
+            throw new Error("Unauthorized: You can only update your own packs")
+        }
+
+        const { error } = await supabase
+            .from('packs')
+            .update({
+                title: pack.title,
+                description: pack.description,
+                price: pack.price,
+                original_price: pack.originalPrice,
+                image_url: pack.imageUrl,
+                tags: pack.tags,
+                location: pack.location,
+            })
             .eq('id', packId)
 
         if (error) throw error
