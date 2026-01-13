@@ -103,6 +103,9 @@ export function Navbar() {
                                 <DropdownMenuItem asChild className="focus:bg-brand-light focus:text-brand-primary cursor-pointer rounded-lg">
                                     <Link href="/profile">Perfil</Link>
                                 </DropdownMenuItem>
+                                <DropdownMenuItem asChild className="focus:bg-brand-light focus:text-brand-primary cursor-pointer rounded-lg">
+                                    <Link href="/my-packs">Mis Packs</Link>
+                                </DropdownMenuItem>
                                 <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:bg-destructive/10 focus:text-destructive cursor-pointer rounded-lg">
                                     <LogOut className="mr-2 h-4 w-4" />
                                     Cerrar Sesión
