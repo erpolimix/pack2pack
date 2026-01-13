@@ -5,7 +5,13 @@ export async function GET(request: NextRequest) {
     const { searchParams, origin } = new URL(request.url)
     const code = searchParams.get('code')
     // if "next" is in param, use it as the redirect URL
-    const next = searchParams.get('next') ?? '/'
+    // 🛡️ SECURITY: Validate the 'next' parameter to prevent open redirect vulnerabilities.
+    // Only allow relative paths, defaulting to '/' if the path is invalid.
+    let next = searchParams.get('next') ?? '/'
+    if (!next.startsWith('/')) {
+        console.warn(`[SECURITY] Invalid 'next' parameter detected: ${next}. Defaulting to '/'`)
+        next = '/'
+    }
 
     if (code) {
         const cookieStore = request.cookies
