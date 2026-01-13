@@ -3,27 +3,42 @@
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { packService, type Pack } from "@/services/packService"
+import { authService } from "@/services/authService"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, MapPin, Share2, Shield, User } from "lucide-react"
 import Link from "next/link"
-import Image from "next/image"
 import { Skeleton } from "@/components/ui/skeleton"
+import { User as UserType } from "@supabase/supabase-js"
 
 export default function PackDetailPage() {
     const params = useParams()
     const id = params.id as string
     const [pack, setPack] = useState<Pack | undefined>(undefined)
     const [loading, setLoading] = useState(true)
+    const [currentUser, setCurrentUser] = useState<UserType | null>(null)
 
     useEffect(() => {
-        if (id) {
-            packService.getPackById(id).then(found => {
-                setPack(found)
-                setLoading(false)
-            })
+        const loadPageData = async () => {
+            if (id) {
+                try {
+                    const [foundPack, user] = await Promise.all([
+                        packService.getPackById(id),
+                        authService.getUser()
+                    ])
+                    setPack(foundPack)
+                    setCurrentUser(user)
+                } catch (error) {
+                    console.error("Error loading pack details:", error)
+                } finally {
+                    setLoading(false)
+                }
+            }
         }
+        loadPageData()
     }, [id])
+
+    const isOwner = currentUser?.id === pack?.seller_id
 
     if (loading) {
         return (
@@ -93,8 +108,12 @@ export default function PackDetailPage() {
                                 <span className="text-sm text-muted-foreground line-through">{pack.originalPrice.toFixed(2)}€</span>
                             </div>
                         </div>
-                        <Button size="lg" className="px-8 shadow-lg shadow-primary/20">
-                            Reservar ahora
+                        <Button
+                            size="lg"
+                            className="px-8 shadow-lg shadow-primary/20"
+                            disabled={isOwner}
+                        >
+                            {isOwner ? "Es tu propio pack" : "Reservar ahora"}
                         </Button>
                     </div>
 
