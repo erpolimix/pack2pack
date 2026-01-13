@@ -39,3 +39,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.github/copilot-instructions.md
+supabase/.temp/cli-latest

@@ -29,6 +29,78 @@ export function EditPackForm({ pack, onSuccess }: EditPackFormProps) {
     const [price, setPrice] = useState(pack.price.toString())
     const [originalPrice, setOriginalPrice] = useState(pack.originalPrice?.toString() || "")
     const [tagInput, setTagInput] = useState(pack.tags?.join(", ") || "")
+    const [pickupLocation, setPickupLocation] = useState(pack.pickupLocation || pack.location || "")
+
+    // Time windows with visual picker
+    type TimeSlot = { day: string; time: string; label: string }
+    const [selectedSlots, setSelectedSlots] = useState<TimeSlot[]>(() => {
+        // Convert existing pickupWindows back to TimeSlot format if available
+        if (pack.pickupWindows && pack.pickupWindows.length > 0) {
+            return pack.pickupWindows.map((label, idx) => ({
+                day: `existing-${idx}`,
+                time: `existing-${idx}`,
+                label: label
+            }))
+        }
+        return []
+    })
+
+    // Generate smart day and time options based on current time
+    const generateAvailableOptions = () => {
+        const now = new Date()
+        const currentHour = now.getHours()
+        const currentDay = now.getDay()
+        
+        const allDays = [
+            { value: "today", label: "Hoy", dayNumber: currentDay },
+            { value: "tomorrow", label: "Mañana", dayNumber: (currentDay + 1) % 7 },
+            { value: "dayAfter", label: "Pasado mañana", dayNumber: (currentDay + 2) % 7 },
+        ]
+        
+        const saturdayOffset = (6 - currentDay + 7) % 7
+        if (saturdayOffset > 2) {
+            allDays.push({ value: "saturday", label: "Sábado", dayNumber: 6 })
+        }
+        
+        const sundayOffset = (7 - currentDay) % 7
+        if (sundayOffset > 2) {
+            allDays.push({ value: "sunday", label: "Domingo", dayNumber: 0 })
+        }
+
+        const allTimeSlots = [
+            { value: "morning", label: "Mañana", time: "09:00-12:00", startHour: 9, endHour: 12 },
+            { value: "lunch", label: "Mediodía", time: "12:00-15:00", startHour: 12, endHour: 15 },
+            { value: "afternoon", label: "Tarde", time: "15:00-18:00", startHour: 15, endHour: 18 },
+            { value: "evening", label: "Noche", time: "18:00-21:00", startHour: 18, endHour: 21 },
+        ]
+
+        const getAvailableTimeSlotsForDay = (dayValue: string) => {
+            if (dayValue === "today") {
+                return allTimeSlots.filter(slot => currentHour < slot.endHour - 1)
+            }
+            return allTimeSlots
+        }
+
+        return { days: allDays, getAvailableTimeSlotsForDay, allTimeSlots }
+    }
+
+    const { days: dayOptions, getAvailableTimeSlotsForDay } = generateAvailableOptions()
+
+    const toggleSlot = (day: string, dayLabel: string, time: string, timeLabel: string, timeRange: string) => {
+        const slotId = `${day}-${time}`
+        const label = `${dayLabel} ${timeRange}`
+        
+        const exists = selectedSlots.find(s => `${s.day}-${s.time}` === slotId)
+        if (exists) {
+            setSelectedSlots(selectedSlots.filter(s => `${s.day}-${s.time}` !== slotId))
+        } else {
+            setSelectedSlots([...selectedSlots, { day, time, label }])
+        }
+    }
+
+    const isSlotSelected = (day: string, time: string) => {
+        return selectedSlots.some(s => s.day === day && s.time === time)
+    }
 
     const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
@@ -78,6 +150,8 @@ export function EditPackForm({ pack, onSuccess }: EditPackFormProps) {
                 originalPrice: Number.parseFloat(originalPrice) || 0,
                 imageUrl: finalImageUrl,
                 tags: tagInput.split(',').map(t => t.trim()).filter(Boolean),
+                pickupLocation: pickupLocation || pack.location,
+                pickupWindows: selectedSlots.map(s => s.label),
             })
 
             if (onSuccess) {
@@ -212,6 +286,90 @@ export function EditPackForm({ pack, onSuccess }: EditPackFormProps) {
                     />
                 </div>
 
+                {/* Pickup Location */}
+                <div className="space-y-2">
+                    <Label>Punto de Recogida</Label>
+                    <Input
+                        placeholder="ej. Calle Mayor 15, portal izquierdo"
+                        value={pickupLocation}
+                        onChange={e => setPickupLocation(e.target.value)}
+                        required
+                    />
+                    <p className="text-xs text-gray-500">Dirección específica donde el comprador recogerá el pack</p>
+                </div>
+
+                {/* Time Windows - Visual Slot Picker */}
+                <div className="space-y-3">
+                    <Label className="text-base font-semibold">¿Cuándo pueden recoger el pack?</Label>
+                    <p className="text-xs text-gray-500 -mt-1">Selecciona los días y horarios disponibles (mínimo 1)</p>
+                    
+                    <div className="bg-gray-50 rounded-lg p-4 space-y-4">
+                        {dayOptions.map((day) => {
+                            const availableTimeSlots = getAvailableTimeSlotsForDay(day.value)
+                            
+                            if (availableTimeSlots.length === 0) return null
+                            
+                            return (
+                                <div key={day.value} className="space-y-2">
+                                    <p className="text-sm font-semibold text-gray-700">{day.label}</p>
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                        {availableTimeSlots.map((timeOpt) => {
+                                            const isSelected = isSlotSelected(day.value, timeOpt.value)
+                                            return (
+                                                <button
+                                                    key={timeOpt.value}
+                                                    type="button"
+                                                    onClick={() => toggleSlot(day.value, day.label, timeOpt.value, timeOpt.label, timeOpt.time)}
+                                                    className={`
+                                                        px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all
+                                                        ${isSelected 
+                                                            ? 'border-brand-primary bg-brand-primary text-white shadow-md' 
+                                                            : 'border-gray-200 bg-white text-gray-700 hover:border-brand-primary/50 hover:bg-brand-light'
+                                                        }
+                                                    `}
+                                                >
+                                                    <div className="text-center">
+                                                        <div className="font-semibold">{timeOpt.label}</div>
+                                                        <div className="text-xs opacity-80">{timeOpt.time}</div>
+                                                    </div>
+                                                </button>
+                                            )
+                                        })}
+                                    </div>
+                                </div>
+                            )
+                        })}
+                    </div>
+
+                    {/* Selected slots preview */}
+                    {selectedSlots.length > 0 && (
+                        <div className="bg-brand-light border border-brand-primary/20 rounded-lg p-3">
+                            <p className="text-xs font-semibold text-brand-dark mb-2">Franjas seleccionadas:</p>
+                            <div className="flex flex-wrap gap-2">
+                                {selectedSlots.map((slot, idx) => (
+                                    <span
+                                        key={idx}
+                                        className="inline-flex items-center gap-1 px-2 py-1 bg-white rounded-md text-xs font-medium text-brand-dark border border-brand-primary/20"
+                                    >
+                                        {slot.label}
+                                        <button
+                                            type="button"
+                                            onClick={() => toggleSlot(slot.day, "", slot.time, "", "")}
+                                            className="ml-1 text-brand-primary hover:text-brand-dark"
+                                        >
+                                            ×
+                                        </button>
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                    
+                    {selectedSlots.length === 0 && (
+                        <p className="text-xs text-red-600">⚠️ Selecciona al menos una franja horaria</p>
+                    )}
+                </div>
+
                 <div className="space-y-2">
                     <Label>Etiquetas (separadas por comas)</Label>
                     <Input
@@ -222,9 +380,21 @@ export function EditPackForm({ pack, onSuccess }: EditPackFormProps) {
                 </div>
             </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading || isAnalyzing}>
-                {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                {isLoading ? "Guardando cambios..." : "Guardar Cambios"}
+            <Button 
+                type="submit" 
+                disabled={isLoading || isAnalyzing || selectedSlots.length === 0}
+                className="w-full bg-brand-primary hover:bg-brand-dark text-white h-12 text-base font-bold rounded-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+                {isLoading ? (
+                    <>
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                        Guardando cambios...
+                    </>
+                ) : selectedSlots.length === 0 ? (
+                    "Selecciona franjas horarias"
+                ) : (
+                    "Guardar Cambios"
+                )}
             </Button>
         </form>
     )

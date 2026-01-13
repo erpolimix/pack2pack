@@ -13,6 +13,8 @@ export interface Pack {
     distance: string;
     expiresAt: string;
     tags: string[];
+    pickupLocation?: string;
+    pickupWindows?: string[];
 }
 
 export const packService = {
@@ -40,6 +42,8 @@ export const packService = {
             distance: p.distance,
             expiresAt: p.expires_at,
             tags: p.tags || [],
+            pickupLocation: p.pickup_location,
+            pickupWindows: p.pickup_windows || [],
         }))
     },
 
@@ -68,6 +72,8 @@ export const packService = {
             distance: data.distance,
             expiresAt: data.expires_at,
             tags: data.tags || [],
+            pickupLocation: data.pickup_location,
+            pickupWindows: data.pickup_windows || [],
         }
     },
 
@@ -87,6 +93,8 @@ export const packService = {
                 tags: pack.tags,
                 location: pack.location,
                 distance: pack.distance,
+                pickup_location: pack.pickupLocation,
+                pickup_windows: pack.pickupWindows || [],
                 seller_id: user.id,
                 seller_name: user.user_metadata.full_name || pack.sellerName || "Usuario Pack2Pack",
                 expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
@@ -168,6 +176,8 @@ export const packService = {
             distance: p.distance,
             expiresAt: p.expires_at,
             tags: p.tags || [],
+            pickupLocation: p.pickup_location,
+            pickupWindows: p.pickup_windows || [],
         }))
     },
 
@@ -196,6 +206,8 @@ export const packService = {
                 image_url: pack.imageUrl,
                 tags: pack.tags,
                 location: pack.location,
+                pickup_location: pack.pickupLocation,
+                pickup_windows: pack.pickupWindows,
             })
             .eq('id', packId)
 

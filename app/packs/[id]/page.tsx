@@ -1,22 +1,36 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { packService, type Pack } from "@/services/packService"
+import { bookingService } from "@/services/bookingService"
 import { authService } from "@/services/authService"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, MapPin, Share2, Shield, User } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Toast } from "@/components/ui/toast"
+import { useToast } from "@/lib/useToast"
+import { ArrowLeft, MapPin, Share2, Shield, User, Calendar, Clock } from "lucide-react"
 import Link from "next/link"
 import { Skeleton } from "@/components/ui/skeleton"
 import { User as UserType } from "@supabase/supabase-js"
 
 export default function PackDetailPage() {
     const params = useParams()
+    const router = useRouter()
     const id = params.id as string
     const [pack, setPack] = useState<Pack | undefined>(undefined)
     const [loading, setLoading] = useState(true)
     const [currentUser, setCurrentUser] = useState<UserType | null>(null)
+    const [showBookingModal, setShowBookingModal] = useState(false)
+    const [bookingInProgress, setBookingInProgress] = useState(false)
+    const [hasActiveBooking, setHasActiveBooking] = useState(false)
+    
+    // Booking form state
+    const [selectedTimeWindow, setSelectedTimeWindow] = useState("")
+    
+    const { toast, showSuccess, showError, hideToast } = useToast()
 
     useEffect(() => {
         const loadPageData = async () => {
@@ -28,6 +42,12 @@ export default function PackDetailPage() {
                     ])
                     setPack(foundPack)
                     setCurrentUser(user)
+                    
+                    // Check if user has active booking for this pack
+                    if (user && foundPack) {
+                        const hasBooking = await bookingService.hasActiveBooking(foundPack.id)
+                        setHasActiveBooking(hasBooking)
+                    }
                 } catch (error) {
                     console.error("Error loading pack details:", error)
                 } finally {
@@ -39,6 +59,45 @@ export default function PackDetailPage() {
     }, [id])
 
     const isOwner = currentUser?.id === pack?.seller_id
+
+    const handleReserveClick = () => {
+        if (!currentUser) {
+            router.push('/login')
+            return
+        }
+        if (hasActiveBooking) {
+            showError("Ya tienes una reserva activa para este pack")
+            return
+        }
+        setShowBookingModal(true)
+    }
+
+    const handleBookingSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        
+        if (!selectedTimeWindow) {
+            showError("Selecciona una franja horaria")
+            return
+        }
+
+        setBookingInProgress(true)
+        try {
+            await bookingService.createBooking(pack!.id, selectedTimeWindow)
+            showSuccess("¡Reserva creada! Revisa tu código en 'Mis Compras'")
+            setShowBookingModal(false)
+            setHasActiveBooking(true)
+            
+            // Redirect to purchases after a moment
+            setTimeout(() => {
+                router.push('/my-purchases')
+            }, 2000)
+        } catch (error) {
+            console.error(error)
+            showError(error instanceof Error ? error.message : "Error al crear la reserva")
+        } finally {
+            setBookingInProgress(false)
+        }
+    }
 
     if (loading) {
         return (
@@ -111,9 +170,10 @@ export default function PackDetailPage() {
                         <Button
                             size="lg"
                             className="px-8 shadow-lg shadow-primary/20"
-                            disabled={isOwner}
+                            disabled={isOwner || hasActiveBooking}
+                            onClick={handleReserveClick}
                         >
-                            {isOwner ? "Es tu propio pack" : "Reservar ahora"}
+                            {isOwner ? "Es tu propio pack" : hasActiveBooking ? "Ya reservado" : "Reservar ahora"}
                         </Button>
                     </div>
 
@@ -147,6 +207,104 @@ export default function PackDetailPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Booking Modal */}
+            {showBookingModal && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
+                        <h2 className="text-2xl font-bold text-brand-dark mb-4">Reservar Pack</h2>
+                        <p className="text-gray-600 mb-6">Selecciona cuándo recogerás el pack</p>
+                        
+                        <form onSubmit={handleBookingSubmit} className="space-y-4">
+                            {/* Pickup Location (readonly from pack) */}
+                            <div className="bg-brand-light p-4 rounded-lg border border-brand-primary/20">
+                                <div className="flex items-start gap-3">
+                                    <MapPin className="h-5 w-5 text-brand-primary flex-shrink-0 mt-0.5" />
+                                    <div>
+                                        <p className="text-sm font-semibold text-brand-dark mb-1">Punto de recogida:</p>
+                                        <p className="text-sm text-gray-700">{pack?.pickupLocation || pack?.location}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Time Window Selection */}
+                            <div>
+                                <Label className="flex items-center gap-2 mb-3">
+                                    <Clock className="h-4 w-4 text-brand-primary" />
+                                    Elige cuándo recogerás el pack
+                                </Label>
+                                <div className="space-y-2 max-h-64 overflow-y-auto">
+                                    {pack?.pickupWindows && pack.pickupWindows.length > 0 ? (
+                                        pack.pickupWindows.map((window, index) => (
+                                            <label
+                                                key={index}
+                                                className={`
+                                                    flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all
+                                                    ${selectedTimeWindow === window 
+                                                        ? 'border-brand-primary bg-brand-light shadow-md' 
+                                                        : 'border-gray-200 bg-white hover:border-brand-primary/50 hover:bg-gray-50'
+                                                    }
+                                                `}
+                                            >
+                                                <input
+                                                    type="radio"
+                                                    name="timeWindow"
+                                                    value={window}
+                                                    checked={selectedTimeWindow === window}
+                                                    onChange={(e) => setSelectedTimeWindow(e.target.value)}
+                                                    className="w-5 h-5 text-brand-primary focus:ring-brand-primary"
+                                                />
+                                                <div className="flex-1">
+                                                    <span className="font-semibold text-base">{window}</span>
+                                                </div>
+                                                {selectedTimeWindow === window && (
+                                                    <svg className="w-5 h-5 text-brand-primary" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+                                                    </svg>
+                                                )}
+                                            </label>
+                                        ))
+                                    ) : (
+                                        <p className="text-sm text-gray-500 text-center py-4">No hay franjas disponibles</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+                                <p className="text-sm text-yellow-900">
+                                    <strong>Pago en mano:</strong> El pago se realiza directamente con el vendedor al recoger el pack.
+                                </p>
+                            </div>
+
+                            <div className="flex gap-3 pt-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="flex-1"
+                                    onClick={() => setShowBookingModal(false)}
+                                    disabled={bookingInProgress}
+                                >
+                                    Cancelar
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    className="flex-1 bg-brand-primary hover:bg-brand-dark"
+                                    disabled={bookingInProgress || !selectedTimeWindow}
+                                >
+                                    {bookingInProgress ? "Reservando..." : "Confirmar Reserva"}
+                                </Button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            <Toast
+                message={toast.message}
+                type={toast.type}
+                isVisible={toast.isVisible}
+                onClose={hideToast}
+            />
         </div>
     )
 }
