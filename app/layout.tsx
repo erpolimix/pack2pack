@@ -1,14 +1,17 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Urbanist } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/navbar";
 import { cn } from "@/lib/utils";
 
-const inter = Inter({ subsets: ["latin"] });
+const urbanist = Urbanist({
+  subsets: ["latin"],
+  variable: "--font-urbanist",
+});
 
 export const metadata: Metadata = {
   title: "Pack2Pack",
-  description: "Buy and sell packs of goods in your community.",
+  description: "Compra y vende packs de productos en tu comunidad.",
 };
 
 export default function RootLayout({
@@ -17,8 +20,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={cn(inter.className, "min-h-screen bg-background antialiased flex flex-col")}>
+    <html lang="es" suppressHydrationWarning>
+      <body className={cn(urbanist.variable, "min-h-screen bg-background font-sans antialiased flex flex-col")} suppressHydrationWarning>
         <Navbar />
         <main className="flex-1">
           {children}

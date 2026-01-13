@@ -1,71 +1,24 @@
 @import "tailwindcss";
 
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 173 80% 40%;
-    /* Teal-ish (TooGoodToGo vibe) */
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 173 80% 40%;
-
-    --radius: 0.75rem;
-  }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 173 80% 40%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 173 80% 40%;
-  }
-}
+@custom-variant dark (&:is(.dark *));
 
 @theme {
+  --font-sans: var(--font-urbanist), ui-sans-serif, system-ui, sans-serif;
+
+  --animate-slide-in-up: slide-in-up 0.7s ease-out forwards;
+
+  @keyframes slide-in-up {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
 
@@ -97,11 +50,93 @@
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
+
+  /* Custom Brand Colors */
+  --color-brand-dark: hsl(var(--brand-dark));
+  --color-brand-primary: hsl(var(--brand-primary));
+  --color-brand-light: hsl(var(--brand-light));
+  --color-brand-accent: hsl(var(--brand-accent));
+  --color-brand-cream: hsl(var(--brand-cream));
+  --color-brand-alert: hsl(var(--brand-alert));
+}
+
+@layer base {
+  :root {
+    /* Base: Cream (#FFF9F0) -> 36 100% 97% */
+    --background: 36 100% 97%;
+    /* Text: Dark Green (#1A3C34) -> 166 40% 17% */
+    --foreground: 166 40% 17%;
+
+    /* Card: White */
+    --card: 0 0% 100%;
+    --card-foreground: 166 40% 17%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 166 40% 17%;
+
+    /* Primary: Kale Green (#2D5A27) -> 113 39% 25% */
+    --primary: 113 39% 25%;
+    --primary-foreground: 36 100% 97%;
+
+    /* Secondary: Light Green (#E8F3E6) -> 112 33% 93% */
+    --secondary: 112 33% 93%;
+    --secondary-foreground: 113 39% 25%;
+
+    --muted: 112 33% 93%;
+    --muted-foreground: 166 20% 40%;
+
+    /* Accent: Apricot (#FFB347) -> 35 100% 64% */
+    --accent: 35 100% 64%;
+    --accent-foreground: 166 40% 17%;
+
+    /* Destructive: Soft Red (#FF6B6B) -> 0 100% 71% */
+    --destructive: 0 100% 71%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 113 20% 85%;
+    --input: 113 20% 85%;
+    --ring: 113 39% 25%;
+
+    --radius: 1rem;
+    /* More rounded as requested (xl/2xl) */
+
+    /* Custom Variables matching the Palette */
+    --brand-dark: 166 40% 17%;
+    --brand-primary: 113 39% 25%;
+    --brand-light: 112 33% 93%;
+    --brand-accent: 35 100% 64%;
+    --brand-cream: 36 100% 97%;
+    --brand-alert: 0 100% 71%;
+  }
+
+  /* Dark mode not explicitly requested, keeping defaults or mapping for now */
+  .dark {
+    --background: 166 40% 10%;
+    --foreground: 36 100% 97%;
+    --card: 166 40% 12%;
+    --card-foreground: 36 100% 97%;
+    --popover: 166 40% 12%;
+    --popover-foreground: 36 100% 97%;
+    --primary: 113 39% 35%;
+    /* Lighter for dark mode */
+    --primary-foreground: 36 100% 97%;
+    --secondary: 166 40% 20%;
+    --secondary-foreground: 36 100% 97%;
+    --muted: 166 40% 20%;
+    --muted-foreground: 166 20% 60%;
+    --accent: 35 100% 64%;
+    --accent-foreground: 166 40% 10%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 166 40% 20%;
+    --input: 166 40% 20%;
+    --ring: 113 39% 35%;
+  }
 }
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border outline-ring/50;
   }
 
   body {

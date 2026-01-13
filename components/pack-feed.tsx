@@ -35,7 +35,7 @@ export function PackFeed({ initialPacks }: PackFeedProps) {
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                         type="search"
-                        placeholder="Search packs..."
+                        placeholder="Buscar packs..."
                         className="pl-8 bg-card"
                         value={search}
                         onChange={e => setSearch(e.target.value)}
@@ -51,10 +51,10 @@ export function PackFeed({ initialPacks }: PackFeedProps) {
 
             {filtered.length === 0 && (
                 <div className="text-center py-20">
-                    <h3 className="text-xl font-semibold mb-2">No packs found</h3>
-                    <p className="text-muted-foreground mb-6">Be the first to create one!</p>
+                    <h3 className="text-xl font-semibold mb-2">No se han encontrado packs</h3>
+                    <p className="text-muted-foreground mb-6">¡Sé el primero en crear uno!</p>
                     <Button asChild>
-                        <Link href="/create">Sell a Pack</Link>
+                        <Link href="/create">Vender un Pack</Link>
                     </Button>
                 </div>
             )}

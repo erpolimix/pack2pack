@@ -15,6 +15,7 @@ export function CreatePackForm() {
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(false)
     const [isAnalyzing, setIsAnalyzing] = useState(false)
+    const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const [imagePreview, setImagePreview] = useState<string | null>(null)
 
     // Form State
@@ -28,6 +29,7 @@ export function CreatePackForm() {
         const file = e.target.files?.[0]
         if (!file) return
 
+        setSelectedFile(file)
         // Create preview
         const reader = new FileReader()
         reader.onloadend = () => {
@@ -39,9 +41,11 @@ export function CreatePackForm() {
         setIsAnalyzing(true)
         try {
             const aiDesc = await aiService.generateDescription(file)
-            setDescription(aiDesc)
-            // Heuristic title guess based on description or random
-            setTitle(aiDesc.split(' ').slice(0, 3).join(' ') + " Pack")
+            if (aiDesc && !aiDesc.startsWith("No se ha podido")) {
+                setDescription(aiDesc)
+                // Heuristic title guess based on description
+                setTitle(aiDesc.split(' ').slice(0, 3).join(' ') + " Pack")
+            }
         } catch (error) {
             console.error("AI Error", error)
         } finally {
@@ -54,19 +58,34 @@ export function CreatePackForm() {
         setIsLoading(true)
 
         try {
+            // 1. Upload image if exists
+            let finalImageUrl = imagePreview || "https://images.unsplash.com/photo-1546213290-e1fc4f6d4f75?auto=format&fit=crop&q=80&w=600"
+
+            if (selectedFile) {
+                finalImageUrl = await packService.uploadImage(selectedFile)
+            }
+
+            // 2. Create pack in DB
             await packService.createPack({
                 title,
                 description,
                 price: Number.parseFloat(price) || 0,
                 originalPrice: Number.parseFloat(originalPrice) || 0,
-                imageUrl: imagePreview || "https://images.unsplash.com/photo-1546213290-e1fc4f6d4f75?auto=format&fit=crop&q=80&w=600",
+                imageUrl: finalImageUrl,
                 tags: tagInput.split(',').map(t => t.trim()).filter(Boolean),
-                location: "My Neighborhood", // Demo default
-                expiresAt: new Date(Date.now() + 86400000).toISOString() // 24h default
+                location: "Mi Barrio",
+                distance: "0.5 km",
+                sellerName: "Usuario Demo"
             })
             router.push('/')
         } catch (error) {
-            console.error("Submit Error", error)
+            console.error("Submit Error:", error)
+            console.error("Error details:", {
+                message: error instanceof Error ? error.message : 'Unknown error',
+                stack: error instanceof Error ? error.stack : undefined,
+                fullError: JSON.stringify(error, null, 2)
+            })
+            alert("Error al publicar el pack. Por favor, revisa la consola para más detalles.")
         } finally {
             setIsLoading(false)
         }
@@ -78,7 +97,7 @@ export function CreatePackForm() {
             {/* Image Upload Area */}
             <div className="space-y-2">
                 <Label htmlFor="image-upload" className="block text-sm font-medium">
-                    Pack Photo
+                    Foto del Pack
                 </Label>
                 <div className="relative group cursor-pointer border-2 border-dashed border-muted-foreground/25 rounded-xl hover:bg-muted/50 transition-colors h-48 flex flex-col items-center justify-center bg-muted/10 overflow-hidden">
                     <input
@@ -87,7 +106,7 @@ export function CreatePackForm() {
                         accept="image/*"
                         className="absolute inset-0 opacity-0 cursor-pointer z-20"
                         onChange={handleImageChange}
-                        required={!imagePreview} // Require unless we have a preview (mock)
+                        required={!imagePreview}
                     />
 
                     {imagePreview ? (
@@ -97,26 +116,26 @@ export function CreatePackForm() {
                     ) : (
                         <div className="flex flex-col items-center text-muted-foreground">
                             <Camera className="w-8 h-8 mb-2" />
-                            <span className="text-sm font-medium">Tap to take photo</span>
+                            <span className="text-sm font-medium">Pulsa para hacer foto</span>
                         </div>
                     )}
 
                     {isAnalyzing && (
                         <div className="absolute inset-0 bg-background/60 backdrop-blur-sm z-30 flex items-center justify-center flex-col text-primary animate-in fade-in">
                             <Sparkles className="w-6 h-6 mb-2 animate-pulse" />
-                            <span className="text-xs font-semibold">AI analyzing...</span>
+                            <span className="text-xs font-semibold">IA analizando...</span>
                         </div>
                     )}
                 </div>
                 <p className="text-[10px] text-muted-foreground text-center">
-                    AI will automatically describe your items.
+                    La IA describirá automáticamente tus productos.
                 </p>
             </div>
 
             <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <Label>Price (€)</Label>
+                        <Label>Precio (€)</Label>
                         <Input
                             type="number"
                             step="0.50"
@@ -127,7 +146,7 @@ export function CreatePackForm() {
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label>Original Value (€)</Label>
+                        <Label>Valor Original (€)</Label>
                         <Input
                             type="number"
                             step="0.50"
@@ -139,9 +158,9 @@ export function CreatePackForm() {
                 </div>
 
                 <div className="space-y-2">
-                    <Label>Title</Label>
+                    <Label>Título</Label>
                     <Input
-                        placeholder="e.g. Kitchen Starter Pack"
+                        placeholder="ej. Pack de inicio de cocina"
                         value={title}
                         onChange={e => setTitle(e.target.value)}
                         required
@@ -150,27 +169,31 @@ export function CreatePackForm() {
 
                 <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                        <Label>Description</Label>
+                        <Label>Descripción</Label>
                         <Button
                             type="button"
                             variant="ghost"
                             size="sm"
                             className="h-6 text-xs text-primary"
-                            onClick={() => {
+                            onClick={async () => {
+                                if (!selectedFile) {
+                                    alert("Primero sube una foto para que la IA la analice.");
+                                    return;
+                                }
                                 setIsAnalyzing(true);
-                                setTimeout(() => {
-                                    aiService.generateDescription(new File([], "foo")).then(d => {
-                                        setDescription(d);
-                                        setIsAnalyzing(false);
-                                    });
-                                }, 1000);
+                                try {
+                                    const d = await aiService.generateDescription(selectedFile);
+                                    setDescription(d);
+                                } finally {
+                                    setIsAnalyzing(false);
+                                }
                             }}
                         >
-                            <Sparkles className="w-3 h-3 mr-1" /> Regenerate
+                            <Sparkles className="w-3 h-3 mr-1" /> Regenerar
                         </Button>
                     </div>
                     <Textarea
-                        placeholder="What&apos;s in the pack?"
+                        placeholder="¿Qué hay en el pack?"
                         value={description}
                         onChange={e => setDescription(e.target.value)}
                         className="h-24 resize-none"
@@ -179,9 +202,9 @@ export function CreatePackForm() {
                 </div>
 
                 <div className="space-y-2">
-                    <Label>Tags (comma separated)</Label>
+                    <Label>Etiquetas (separadas por comas)</Label>
                     <Input
-                        placeholder="clothes, vintage, tech"
+                        placeholder="ropa, vintage, tecnología"
                         value={tagInput}
                         onChange={e => setTagInput(e.target.value)}
                     />
@@ -190,7 +213,7 @@ export function CreatePackForm() {
 
             <Button type="submit" className="w-full" disabled={isLoading || isAnalyzing}>
                 {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                {isLoading ? "Publishing..." : "Sell Pack"}
+                {isLoading ? "Publicando..." : "Vender Pack"}
             </Button>
         </form>
     )

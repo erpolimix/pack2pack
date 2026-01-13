@@ -1,8 +1,6 @@
 import Link from "next/link"
-import Image from "next/image"
-import { Clock, MapPin } from "lucide-react"
-import { Card, CardContent, CardFooter } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Clock } from "lucide-react"
+import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import type { Pack } from "@/services/packService"
 
@@ -11,61 +9,80 @@ interface PackCardProps {
 }
 
 export function PackCard({ pack }: PackCardProps) {
-    const discount = Math.round(((pack.originalPrice - pack.price) / pack.originalPrice) * 100)
+    // Determine random stock for visual flair if not present (simulated based on logic)
+    const showLowStock = Math.random() > 0.7;
 
     return (
-        <Card className="overflow-hidden group hover:shadow-lg transition-shadow border-0 shadow-md bg-card">
-            <div className="relative aspect-[4/3] overflow-hidden">
+        <Card className="pack-card group border-0 shadow-md hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden bg-white flex flex-col h-full relative">
+            {/* Image Section */}
+            <div className="relative h-48 overflow-hidden">
+                {showLowStock && (
+                    <div className="absolute top-3 left-3 bg-brand-alert text-white text-xs font-bold px-2 py-1 rounded-md z-10 shadow-sm animate-pulse">
+                        ¡Solo quedan 2!
+                    </div>
+                )}
+
+                <button className="absolute top-3 right-3 z-10 w-8 h-8 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center text-gray-400 hover:text-brand-alert hover:bg-white transition-colors shadow-sm">
+                    <Clock className="h-4 w-4" /> {/* Using Clock as placeholder for Heart/Favorite logic if needed */}
+                </button>
+
                 <img
                     src={pack.imageUrl}
                     alt={pack.title}
-                    className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
+                    className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
                 />
-                <div className="absolute top-3 left-3">
-                    <Badge variant="secondary" className="bg-white/90 text-black shadow-sm backdrop-blur-sm font-bold">
-                        -{discount}%
-                    </Badge>
-                </div>
-                <div className="absolute top-3 right-3">
-                    <Badge className="bg-primary/90 text-white shadow-sm backdrop-blur-sm">
-                        {pack.price.toFixed(2)}€
-                    </Badge>
+
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
+                    <span className="text-white text-xs font-bold bg-black/30 backdrop-blur-md px-2 py-1 rounded-lg border border-white/20 flex items-center w-fit">
+                        <Clock className="mr-1 h-3 w-3" /> {new Date(pack.expiresAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
                 </div>
             </div>
 
-            <CardContent className="p-4">
-                <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-bold text-lg leading-tight line-clamp-1">{pack.title}</h3>
+            {/* Content Section */}
+            <div className="p-4 flex flex-col flex-grow">
+                {/* User Info Mock (since we don't have all this data in Pack yet, we use placeholders or derived data) */}
+                <div className="flex items-center mb-3 pb-3 border-b border-gray-100">
+                    <div className="w-8 h-8 rounded-full bg-brand-light border border-gray-200 mr-2 flex items-center justify-center text-brand-primary font-bold text-xs">
+                        {pack.sellerName.charAt(0)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-gray-800 truncate">{pack.sellerName}</p>
+                        <div className="flex items-center text-[10px] text-gray-500">
+                            <span className="text-brand-accent mr-1">★</span> 4.9 <span className="ml-1">(12)</span>
+                        </div>
+                    </div>
+                    <div className="text-xs text-brand-primary font-bold bg-brand-light px-2 py-1 rounded-full">
+                        {pack.distance}
+                    </div>
                 </div>
 
-                <div className="flex items-center text-muted-foreground text-xs mb-3 space-x-2">
-                    <span className="flex items-center"><MapPin className="w-3 h-3 mr-1" /> {pack.distance} • {pack.location}</span>
-                </div>
+                <h3 className="font-bold text-lg text-brand-dark mb-1 leading-tight line-clamp-2 min-h-[3.5rem]">
+                    <Link href={`/packs/${pack.id}`} className="hover:text-brand-primary transition-colors">
+                        {pack.title}
+                    </Link>
+                </h3>
 
-                <p className="text-muted-foreground text-sm line-clamp-2 h-10 mb-4">
-                    {pack.description}
-                </p>
-
-                <div className="flex flex-wrap gap-2 mb-2">
+                <div className="flex flex-wrap gap-2 mb-4 mt-2">
                     {pack.tags.map(tag => (
-                        <span key={tag} className="text-[10px] bg-secondary px-2 py-0.5 rounded-full text-secondary-foreground font-medium">
+                        <span key={tag} className="text-[10px] font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
                             {tag}
                         </span>
                     ))}
                 </div>
-            </CardContent>
 
-            <CardFooter className="p-4 pt-0 flex justify-between items-center text-sm border-t bg-muted/20 mt-auto">
-                <div className="flex items-center text-orange-600 font-medium text-xs">
-                    <Clock className="w-3 h-3 mr-1" />
-                    Expires in 2h
+                <div className="mt-auto flex justify-between items-end">
+                    <div>
+                        <span className="text-gray-400 text-sm line-through block">{pack.originalPrice}€</span>
+                        <span className="text-brand-accent text-2xl font-extrabold">{pack.price}€</span>
+                    </div>
+                    <Button asChild className="bg-brand-light text-brand-primary hover:bg-brand-primary hover:text-white font-bold rounded-xl text-sm transition-colors shadow-none hover:shadow-md">
+                        <Link href={`/packs/${pack.id}`}>
+                            Ver Pack
+                        </Link>
+                    </Button>
                 </div>
-                <Button size="sm" asChild className="rounded-full px-4">
-                    <Link href={`/packs/${pack.id}`}>
-                        View Pack
-                    </Link>
-                </Button>
-            </CardFooter>
+            </div>
         </Card>
     )
 }

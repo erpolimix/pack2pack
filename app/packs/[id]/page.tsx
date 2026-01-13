@@ -39,9 +39,9 @@ export default function PackDetailPage() {
     if (!pack) {
         return (
             <div className="container py-20 text-center">
-                <h1 className="text-2xl font-bold mb-4">Pack not found</h1>
+                <h1 className="text-2xl font-bold mb-4">Pack no encontrado</h1>
                 <Button asChild>
-                    <Link href="/">Back to Feed</Link>
+                    <Link href="/">Volver al inicio</Link>
                 </Button>
             </div>
         )
@@ -52,7 +52,7 @@ export default function PackDetailPage() {
     return (
         <div className="container max-w-4xl mx-auto py-8 px-4">
             <Button variant="ghost" size="sm" asChild className="mb-4 -ml-2 text-muted-foreground">
-                <Link href="/"><ArrowLeft className="w-4 h-4 mr-2" /> Back to Search</Link>
+                <Link href="/"><ArrowLeft className="w-4 h-4 mr-2" /> Volver a buscar</Link>
             </Button>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -65,7 +65,7 @@ export default function PackDetailPage() {
                     />
                     <div className="absolute top-4 left-4">
                         <Badge variant="secondary" className="text-sm font-bold shadow-sm">
-                            -{discount}% OFF
+                            -{discount}% DTO.
                         </Badge>
                     </div>
                 </div>
@@ -87,19 +87,19 @@ export default function PackDetailPage() {
 
                     <div className="bg-muted/30 p-4 rounded-lg border flex justify-between items-center">
                         <div>
-                            <p className="text-xs text-muted-foreground uppercase font-semibold">Price</p>
+                            <p className="text-xs text-muted-foreground uppercase font-semibold">Precio</p>
                             <div className="flex items-baseline gap-2">
                                 <span className="text-3xl font-bold text-primary">{pack.price.toFixed(2)}€</span>
                                 <span className="text-sm text-muted-foreground line-through">{pack.originalPrice.toFixed(2)}€</span>
                             </div>
                         </div>
                         <Button size="lg" className="px-8 shadow-lg shadow-primary/20">
-                            Reserve Now
+                            Reservar ahora
                         </Button>
                     </div>
 
                     <div className="space-y-4">
-                        <h3 className="font-semibold text-lg">About this pack</h3>
+                        <h3 className="font-semibold text-lg">Sobre este pack</h3>
                         <p className="text-muted-foreground leading-relaxed">
                             {pack.description}
                         </p>
@@ -118,11 +118,11 @@ export default function PackDetailPage() {
                             <div>
                                 <p className="text-sm font-medium">{pack.sellerName}</p>
                                 <div className="flex items-center text-xs text-green-600">
-                                    <Shield className="w-3 h-3 mr-1" /> Verified
+                                    <Shield className="w-3 h-3 mr-1" /> Verificado
                                 </div>
                             </div>
                             <Button variant="outline" size="sm" className="ml-auto">
-                                View Profile
+                                Ver Perfil
                             </Button>
                         </div>
                     </div>
