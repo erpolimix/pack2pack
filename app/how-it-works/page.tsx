@@ -29,7 +29,7 @@ export default function HowItWorksPage() {
             <section className="relative overflow-hidden pt-20 pb-32 px-4">
                 <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-brand-light/50 via-transparent to-transparent -z-10" />
 
-                <div className="container mx-auto text-center max-w-4xl animate-in fade-in slide-in-from-bottom-8 duration-700">
+                <div className="container mx-auto text-center max-w-4xl animate-in fade-in slide-in-from-bottom-8 duration-700 px-6 sm:px-8">
                     <Badge variant="outline" className="mb-6 px-4 py-1.5 text-sm border-brand-primary text-brand-primary bg-brand-primary/5">
                         <Leaf className="w-3.5 h-3.5 mr-2" /> Movimiento Anti-Desperdicio
                     </Badge>
@@ -46,7 +46,7 @@ export default function HowItWorksPage() {
                         <button
                             onClick={() => setActiveTab("buyer")}
                             className={cn(
-                                "px-8 py-3 rounded-full text-sm font-bold transition-all duration-300 flex items-center gap-2",
+                                "px-8 py-3 rounded-full text-sm font-bold transition-all duration-300 flex items-center gap-2 cursor-pointer",
                                 activeTab === "buyer"
                                     ? "bg-brand-primary text-white shadow-md"
                                     : "text-muted-foreground hover:text-brand-dark hover:bg-gray-50"
@@ -57,7 +57,7 @@ export default function HowItWorksPage() {
                         <button
                             onClick={() => setActiveTab("seller")}
                             className={cn(
-                                "px-8 py-3 rounded-full text-sm font-bold transition-all duration-300 flex items-center gap-2",
+                                "px-8 py-3 rounded-full text-sm font-bold transition-all duration-300 flex items-center gap-2 cursor-pointer",
                                 activeTab === "seller"
                                     ? "bg-brand-accent text-brand-dark shadow-md"
                                     : "text-muted-foreground hover:text-brand-dark hover:bg-gray-50"
@@ -70,7 +70,7 @@ export default function HowItWorksPage() {
             </section>
 
             {/* Steps Section */}
-            <section className="py-20 px-4 bg-white/50 backdrop-blur-sm">
+            <section className="py-20 px-6 sm:px-8 bg-white/50 backdrop-blur-sm">
                 <div className="container mx-auto max-w-5xl">
                     <div className="text-center mb-16">
                         <h2 className="text-3xl font-bold text-brand-dark mb-4">
@@ -155,7 +155,7 @@ export default function HowItWorksPage() {
             </section>
 
             {/* Impact Section */}
-            <section className="py-20 px-4 bg-brand-primary text-white overflow-hidden relative">
+            <section className="py-20 px-6 sm:px-8 bg-brand-primary text-white overflow-hidden relative">
                 <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
                 <div className="absolute bottom-0 left-0 w-64 h-64 bg-brand-accent/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
 
@@ -206,7 +206,7 @@ export default function HowItWorksPage() {
             </section>
 
             {/* FAQ Section */}
-            <section className="py-20 px-4 container mx-auto max-w-3xl">
+            <section className="py-20 px-6 sm:px-8 container mx-auto max-w-3xl">
                 <div className="text-center mb-12">
                     <h2 className="text-3xl font-bold text-brand-dark">Preguntas Frecuentes</h2>
                     <p className="text-muted-foreground mt-2">Resolvemos tus dudas principales</p>
@@ -233,7 +233,7 @@ export default function HowItWorksPage() {
             </section>
 
             {/* CTA Final */}
-            <section className="py-20 px-4 text-center bg-brand-light/30">
+            <section className="py-20 px-6 sm:px-8 text-center bg-brand-light/30">
                 <h2 className="text-3xl font-bold text-brand-dark mb-6">¿Listo para empezar?</h2>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     <Button asChild size="lg" className="rounded-full px-8 h-14 text-lg shadow-lg hover:translate-y-[-2px] transition-transform">
@@ -275,7 +275,7 @@ function FaqItem({ question, answer }: { question: string, answer: string }) {
         <div className="border rounded-xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow">
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-full flex items-center justify-between p-6 text-left font-semibold text-brand-dark hover:bg-gray-50 transition-colors"
+                className="w-full flex items-center justify-between p-6 text-left font-semibold text-brand-dark hover:bg-gray-50 transition-colors cursor-pointer"
             >
                 {question}
                 <ChevronDown className={cn("w-5 h-5 text-muted-foreground transition-transform duration-300", isOpen && "rotate-180")} />

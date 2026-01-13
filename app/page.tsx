@@ -36,7 +36,7 @@ export default function Home() {
         <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 bg-brand-accent/20 rounded-full blur-3xl"></div>
         <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-64 h-64 bg-brand-primary/10 rounded-full blur-3xl"></div>
 
-        <div className="container mx-auto relative z-10 py-16 md:py-24 grid md:grid-cols-2 gap-12 items-center">
+        <div className="container mx-auto relative z-10 py-16 md:py-24 grid md:grid-cols-2 gap-12 items-center px-6 sm:px-8">
           <div>
             <div className="inline-flex items-center px-3 py-1 rounded-full bg-brand-primary/10 text-brand-primary text-xs font-bold mb-6">
               <Leaf className="mr-2 h-3 w-3" /> #1 App de intercambio vecinal
@@ -50,10 +50,13 @@ export default function Home() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button className="bg-brand-primary text-white px-8 h-12 rounded-xl font-bold shadow-lg shadow-brand-primary/30 hover:bg-brand-dark transition-all text-base">
+              <Button
+                onClick={() => document.getElementById('packs-grid')?.scrollIntoView({ behavior: 'smooth' })}
+                className="bg-brand-primary text-white px-8 h-12 rounded-xl font-bold shadow-lg shadow-brand-primary/30 hover:bg-brand-dark transition-all text-base cursor-pointer"
+              >
                 Explorar Packs
               </Button>
-              <Button variant="outline" className="border-gray-200 text-brand-dark px-8 h-12 rounded-xl font-bold hover:bg-white hover:text-brand-primary transition-all text-base">
+              <Button variant="outline" className="border-gray-200 text-brand-dark px-8 h-12 rounded-xl font-bold hover:bg-white hover:text-brand-primary transition-all text-base cursor-pointer">
                 <MapPin className="mr-2 h-4 w-4" /> Ver Mapa
               </Button>
             </div>
@@ -87,51 +90,51 @@ export default function Home() {
 
       {/* FILTERS & CONTENT */}
       <div className="sticky top-16 z-40 bg-brand-cream/95 backdrop-blur-sm border-b border-brand-primary/5 py-4 shadow-sm">
-        <div className="container mx-auto overflow-x-auto no-scrollbar px-4">
+        <div className="container mx-auto overflow-x-auto no-scrollbar px-6 sm:px-8">
           <div className="flex space-x-3 md:space-x-4 min-w-max">
-            <Button variant="default" className="rounded-full bg-brand-dark text-white hover:bg-brand-dark/90 font-bold text-sm shadow-md transition-transform transform active:scale-95 flex items-center gap-2">
+            <Button variant="default" className="rounded-full bg-brand-dark text-white hover:bg-brand-dark/90 font-bold text-sm shadow-md transition-transform transform active:scale-95 flex items-center gap-2 cursor-pointer">
               <Leaf className="h-4 w-4" /> Todo
             </Button>
-            <Button variant="outline" className="rounded-full bg-white border-gray-200 text-gray-600 font-semibold text-sm hover:border-brand-primary hover:text-brand-primary transition-colors hover:bg-white/50 flex items-center gap-2">
+            <Button variant="outline" className="rounded-full bg-white border-gray-200 text-gray-600 font-semibold text-sm hover:border-brand-primary hover:text-brand-primary transition-colors hover:bg-white/50 flex items-center gap-2 cursor-pointer">
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
               Huerto
             </Button>
-            <Button variant="outline" className="rounded-full bg-white border-gray-200 text-gray-600 font-semibold text-sm hover:border-brand-primary hover:text-brand-primary transition-colors hover:bg-white/50 flex items-center gap-2">
+            <Button variant="outline" className="rounded-full bg-white border-gray-200 text-gray-600 font-semibold text-sm hover:border-brand-primary hover:text-brand-primary transition-colors hover:bg-white/50 flex items-center gap-2 cursor-pointer">
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
               Panadería
             </Button>
-            <Button variant="outline" className="rounded-full bg-white border-gray-200 text-gray-600 font-semibold text-sm hover:border-brand-primary hover:text-brand-primary transition-colors hover:bg-white/50 flex items-center gap-2">
+            <Button variant="outline" className="rounded-full bg-white border-gray-200 text-gray-600 font-semibold text-sm hover:border-brand-primary hover:text-brand-primary transition-colors hover:bg-white/50 flex items-center gap-2 cursor-pointer">
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
               </svg>
               Cocinado
             </Button>
-            <Button variant="outline" className="rounded-full bg-white border-gray-200 text-gray-600 font-semibold text-sm hover:border-brand-primary hover:text-brand-primary transition-colors hover:bg-white/50 flex items-center gap-2">
+            <Button variant="outline" className="rounded-full bg-white border-gray-200 text-gray-600 font-semibold text-sm hover:border-brand-primary hover:text-brand-primary transition-colors hover:bg-white/50 flex items-center gap-2 cursor-pointer">
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
               </svg>
               Pack Sorpresa
             </Button>
-            <Button variant="outline" className="rounded-full bg-white border-gray-200 text-gray-600 font-semibold text-sm hover:border-brand-primary hover:text-brand-primary transition-colors hover:bg-white/50 flex items-center gap-2">
+            <Button variant="outline" className="rounded-full bg-white border-gray-200 text-gray-600 font-semibold text-sm hover:border-brand-primary hover:text-brand-primary transition-colors hover:bg-white/50 flex items-center gap-2 cursor-pointer">
               <Leaf className="h-4 w-4" /> Vegano
             </Button>
           </div>
         </div>
       </div>
 
-      <main className="flex-1 container mx-auto py-8">
+      <main className="flex-1 container mx-auto py-8 px-6 sm:px-8">
         <div className="flex justify-between items-end mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-brand-dark">Cerca de ti</h2>
+            <h2 id="packs-grid" className="text-2xl font-bold text-brand-dark">Cerca de ti</h2>
             <p className="text-gray-500 text-sm mt-1 flex items-center">
               <MapPin className="h-3 w-3 text-brand-primary mr-1" /> Basado en tu ubicación actual
             </p>
           </div>
-          <Link href="#" className="text-brand-primary font-bold text-sm hover:underline">Ver todos</Link>
+          <Link href="/" className="text-brand-primary font-bold text-sm hover:underline cursor-pointer">Ver todos</Link>
         </div>
 
         {/* Grid */}

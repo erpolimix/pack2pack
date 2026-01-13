@@ -99,7 +99,7 @@ export default function MyPacksPage() {
 
     return (
         <div className="min-h-screen bg-brand-cream">
-            <div className="container mx-auto px-4 py-8">
+            <div className="container mx-auto px-6 py-8">
                 {/* Header */}
                 <div className="mb-8">
                     <h1 className="text-3xl md:text-4xl font-extrabold text-brand-dark mb-2">

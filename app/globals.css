@@ -143,3 +143,19 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Global cursor overrides */
+button,
+[role="button"],
+a,
+input[type="submit"],
+input[type="button"] {
+  cursor: pointer !important;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+textarea {
+  cursor: text !important;
+}

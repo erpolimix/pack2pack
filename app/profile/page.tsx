@@ -90,7 +90,7 @@ export default function ProfilePage() {
     }
 
     return (
-        <div className="container mx-auto max-w-3xl py-10 px-4">
+        <div className="container mx-auto max-w-3xl py-10 px-6">
             <div className="bg-white rounded-3xl shadow-sm border border-brand-primary/5 p-8 md:p-10">
                 {/* Header */}
                 <div className="border-b border-gray-100 pb-6 mb-8">

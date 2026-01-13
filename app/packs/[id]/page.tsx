@@ -65,7 +65,7 @@ export default function PackDetailPage() {
     const discount = Math.round(((pack.originalPrice - pack.price) / pack.originalPrice) * 100)
 
     return (
-        <div className="container max-w-4xl mx-auto py-8 px-4">
+        <div className="container max-w-4xl mx-auto py-8 px-6">
             <Button variant="ghost" size="sm" asChild className="mb-4 -ml-2 text-muted-foreground">
                 <Link href="/"><ArrowLeft className="w-4 h-4 mr-2" /> Volver a buscar</Link>
             </Button>

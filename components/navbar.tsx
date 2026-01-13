@@ -41,7 +41,7 @@ export function Navbar() {
 
     return (
         <header className="sticky top-0 z-50 w-full border-b border-brand-primary/10 bg-brand-cream/80 backdrop-blur-md">
-            <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
+            <div className="container mx-auto flex h-16 items-center justify-between px-6 sm:px-8 lg:px-12">
                 {/* Logo */}
                 <Link href="/" className="flex items-center gap-2 group cursor-pointer flex-shrink-0">
                     <div className="w-8 h-8 bg-brand-primary rounded-lg flex items-center justify-center text-white shadow-sm group-hover:bg-brand-dark transition-colors">
@@ -69,7 +69,7 @@ export function Navbar() {
 
                 {/* Actions */}
                 <div className="flex items-center gap-4">
-                    <Link href="#" className="text-sm font-semibold text-brand-dark hover:text-brand-primary hidden sm:block transition-colors">
+                    <Link href="/how-it-works" className="text-sm font-semibold text-brand-dark hover:text-brand-primary hidden sm:block transition-colors">
                         Cómo funciona
                     </Link>
 
