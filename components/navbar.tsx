@@ -51,7 +51,7 @@ export function Navbar() {
                 </Link>
 
                 {/* Desktop Search */}
-                <div className="hidden md:flex flex-1 mx-8 max-w-lg">
+                <div className="hidden lg:flex flex-1 mx-8 max-w-lg">
                     <div className="relative w-full">
                         <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
                             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -68,15 +68,17 @@ export function Navbar() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 sm:gap-4">
                     <Link href="/how-it-works" className="text-sm font-semibold text-brand-dark hover:text-brand-primary hidden sm:block transition-colors">
                         Cómo funciona
                     </Link>
 
-                    <Link href="/create" className="hidden md:block">
-                        <Button className="bg-brand-primary hover:bg-brand-dark text-white rounded-full font-bold shadow-lg shadow-brand-primary/20 transition-all">
+                    {/* Vender Pack - Visible en todos los dispositivos */}
+                    <Link href="/create">
+                        <Button className="bg-brand-primary hover:bg-brand-dark text-white rounded-full font-bold shadow-lg shadow-brand-primary/20 transition-all text-sm px-4 sm:px-6">
                             <PlusCircle className="mr-2 h-4 w-4" />
-                            Vender Pack
+                            <span className="hidden sm:inline">Vender Pack</span>
+                            <span className="sm:hidden">Vender</span>
                         </Button>
                     </Link>
 
