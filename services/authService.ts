@@ -57,6 +57,20 @@ export const authService = {
         return data
     },
 
+    async getProfileById(userId: string) {
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .single()
+
+        if (error) {
+            console.error("Error fetching profile:", error)
+            return null
+        }
+        return data
+    },
+
     // Update specific profile fields
     async updateProfile(updates: any) {
         const { data: { user } } = await supabase.auth.getUser()

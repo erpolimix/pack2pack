@@ -3,13 +3,15 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { bookingService, type Booking } from "@/services/bookingService"
+import { ratingService } from "@/services/ratingService"
 import { authService } from "@/services/authService"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Toast } from "@/components/ui/toast"
 import { useToast } from "@/lib/useToast"
-import { Clock, MapPin, Package, CheckCircle, XCircle, Calendar } from "lucide-react"
+import { Clock, MapPin, Package, CheckCircle, XCircle, Calendar, Star } from "lucide-react"
+import { RatingModal } from "@/components/rating-modal"
 import Image from "next/image"
 import Link from "next/link"
 
@@ -17,6 +19,9 @@ export default function MyPurchasesPage() {
     const router = useRouter()
     const [purchases, setPurchases] = useState<Booking[]>([])
     const [loading, setLoading] = useState(true)
+    const [ratingModalOpen, setRatingModalOpen] = useState(false)
+    const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null)
+    const [ratedBookings, setRatedBookings] = useState<Set<string>>(new Set())
     const { toast, showSuccess, showError, hideToast } = useToast()
 
     useEffect(() => {
@@ -43,6 +48,16 @@ export default function MyPurchasesPage() {
         try {
             const data = await bookingService.getMyPurchases()
             setPurchases(data)
+            
+            // Check which bookings have been rated
+            const ratedIds = new Set<string>()
+            for (const booking of data) {
+                const isRated = await ratingService.isBookingRated(booking.id)
+                if (isRated) {
+                    ratedIds.add(booking.id)
+                }
+            }
+            setRatedBookings(ratedIds)
         } catch (error) {
             console.error(error)
             showError("Error al cargar tus compras")
@@ -133,10 +148,10 @@ export default function MyPurchasesPage() {
                 ) : (
                     <div className="space-y-4">
                         {purchases.map((booking) => (
-                            <Card key={booking.id} className="p-6">
-                                <div className="flex gap-6">
+                            <Card key={booking.id} className="p-4 md:p-6">
+                                <div className="flex flex-col md:flex-row gap-4 md:gap-6">
                                     {/* Image */}
-                                    <div className="relative w-32 h-32 rounded-xl overflow-hidden flex-shrink-0">
+                                    <div className="relative w-full md:w-32 h-40 md:h-32 rounded-xl overflow-hidden flex-shrink-0">
                                         <Image
                                             src={booking.packImageUrl || 'https://images.unsplash.com/photo-1546213290-e1fc4f6d4f75?auto=format&fit=crop&q=80&w=600'}
                                             alt={booking.packTitle || 'Pack'}
@@ -146,34 +161,34 @@ export default function MyPurchasesPage() {
                                     </div>
 
                                     {/* Details */}
-                                    <div className="flex-1">
-                                        <div className="flex items-start justify-between mb-3">
-                                            <div>
-                                                <h3 className="text-xl font-bold text-brand-dark mb-1">
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-3">
+                                            <div className="min-w-0">
+                                                <h3 className="text-lg md:text-xl font-bold text-brand-dark mb-1 break-words">
                                                     {booking.packTitle}
                                                 </h3>
                                                 <p className="text-sm text-gray-600">
                                                     Vendedor: {booking.sellerName}
                                                 </p>
                                             </div>
-                                            <div className="text-right">
+                                            <div className="text-left md:text-right">
                                                 {getStatusBadge(booking)}
-                                                <p className="text-2xl font-bold text-brand-primary mt-2">
+                                                <p className="text-xl md:text-2xl font-bold text-brand-primary mt-2">
                                                     €{booking.packPrice?.toFixed(2)}
                                                 </p>
                                             </div>
                                         </div>
 
                                         {/* Pickup Info */}
-                                        <div className="bg-brand-light rounded-lg p-4 mb-4">
-                                            <div className="grid md:grid-cols-2 gap-3">
-                                                <div className="flex items-center gap-2 text-sm">
-                                                    <MapPin className="h-4 w-4 text-brand-primary" />
-                                                    <span>{booking.packPickupLocation || booking.sellerName}</span>
+                                        <div className="bg-brand-light rounded-lg p-3 md:p-4 mb-4">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                <div className="flex items-center gap-2 text-sm min-w-0">
+                                                    <MapPin className="h-4 w-4 text-brand-primary flex-shrink-0" />
+                                                    <span className="break-words">{booking.packPickupLocation || booking.sellerName}</span>
                                                 </div>
-                                                <div className="flex items-center gap-2 text-sm">
-                                                    <Calendar className="h-4 w-4 text-brand-primary" />
-                                                    <span>{booking.selectedTimeWindow}</span>
+                                                <div className="flex items-center gap-2 text-sm min-w-0">
+                                                    <Calendar className="h-4 w-4 text-brand-primary flex-shrink-0" />
+                                                    <span className="break-words">{booking.selectedTimeWindow}</span>
                                                 </div>
                                             </div>
 
@@ -181,7 +196,7 @@ export default function MyPurchasesPage() {
                                             {booking.status !== 'cancelled' && (
                                                 <div className="mt-3 pt-3 border-t border-brand-primary/20">
                                                     <p className="text-xs text-gray-600 mb-1">Código de recogida:</p>
-                                                    <p className="text-3xl font-bold text-brand-primary tracking-wider">
+                                                    <p className="text-2xl md:text-3xl font-bold text-brand-primary tracking-wider break-words">
                                                         {booking.pickupCode}
                                                     </p>
                                                     <p className="text-xs text-gray-600 mt-1">
@@ -192,12 +207,12 @@ export default function MyPurchasesPage() {
                                         </div>
 
                                         {/* Validation Status */}
-                                        <div className="flex gap-4 mb-4 text-sm">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4 text-sm">
                                             <div className="flex items-center gap-2">
                                                 {booking.validatedBySeller ? (
-                                                    <CheckCircle className="h-4 w-4 text-green-600" />
+                                                    <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
                                                 ) : (
-                                                    <Clock className="h-4 w-4 text-gray-400" />
+                                                    <Clock className="h-4 w-4 text-gray-400 flex-shrink-0" />
                                                 )}
                                                 <span className={booking.validatedBySeller ? "text-green-600" : "text-gray-500"}>
                                                     Validado por vendedor
@@ -205,9 +220,9 @@ export default function MyPurchasesPage() {
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 {booking.validatedByBuyer ? (
-                                                    <CheckCircle className="h-4 w-4 text-green-600" />
+                                                    <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
                                                 ) : (
-                                                    <Clock className="h-4 w-4 text-gray-400" />
+                                                    <Clock className="h-4 w-4 text-gray-400 flex-shrink-0" />
                                                 )}
                                                 <span className={booking.validatedByBuyer ? "text-green-600" : "text-gray-500"}>
                                                     Confirmado por ti
@@ -216,13 +231,13 @@ export default function MyPurchasesPage() {
                                         </div>
 
                                         {/* Actions */}
-                                        <div className="flex gap-2">
+                                        <div className="flex flex-col sm:flex-row gap-2">
                                             {booking.status === 'pending' && (
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
                                                     onClick={() => handleCancelBooking(booking.id)}
-                                                    className="text-red-600 border-red-200 hover:bg-red-50"
+                                                    className="text-red-600 border-red-200 hover:bg-red-50 w-full sm:w-auto"
                                                 >
                                                     <XCircle className="h-4 w-4 mr-2" />
                                                     Cancelar Reserva
@@ -232,11 +247,30 @@ export default function MyPurchasesPage() {
                                                 <Button
                                                     size="sm"
                                                     onClick={() => handleConfirmReceipt(booking.id)}
-                                                    className="bg-brand-primary hover:bg-brand-dark"
+                                                    className="bg-brand-primary hover:bg-brand-dark w-full sm:w-auto"
                                                 >
                                                     <CheckCircle className="h-4 w-4 mr-2" />
                                                     Confirmar Recogida
                                                 </Button>
+                                            )}
+                                            {booking.status === 'completed' && !ratedBookings.has(booking.id) && (
+                                                <Button
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        setSelectedBookingId(booking.id)
+                                                        setRatingModalOpen(true)
+                                                    }}
+                                                    className="bg-brand-primary hover:bg-brand-dark w-full sm:w-auto"
+                                                >
+                                                    <Star className="h-4 w-4 mr-2" />
+                                                    Valorar Compra
+                                                </Button>
+                                            )}
+                                            {booking.status === 'completed' && ratedBookings.has(booking.id) && (
+                                                <div className="flex items-center gap-2 text-sm text-brand-primary font-semibold">
+                                                    <CheckCircle className="h-4 w-4" />
+                                                    Valorado
+                                                </div>
                                             )}
                                         </div>
                                     </div>
@@ -246,6 +280,20 @@ export default function MyPurchasesPage() {
                     </div>
                 )}
             </div>
+
+            {/* Rating Modal */}
+            {selectedBookingId && (
+                <RatingModal
+                    isOpen={ratingModalOpen}
+                    bookingId={selectedBookingId}
+                    sellerName={purchases.find(b => b.id === selectedBookingId)?.sellerName || "Vendedor"}
+                    onClose={() => {
+                        setRatingModalOpen(false)
+                        setSelectedBookingId(null)
+                    }}
+                    onSuccess={() => loadPurchases()}
+                />
+            )}
 
             <Toast
                 message={toast.message}

@@ -6,12 +6,14 @@ import { Footer } from "@/components/footer"
 import { useEffect, useState } from "react"
 import type { Pack } from "@/services/packService"
 import { packService } from "@/services/packService"
+import { ratingService } from "@/services/ratingService"
 import { Search, MapPin, Leaf, CheckCircle2 } from "lucide-react"
 import Link from "next/link"
 
 export default function Home() {
   const [packs, setPacks] = useState<Pack[]>([])
   const [loading, setLoading] = useState(true)
+  const [sellerRatings, setSellerRatings] = useState<Record<string, { rating: number; count: number }>>({})
 
   useEffect(() => {
     loadPacks()
@@ -21,8 +23,25 @@ export default function Home() {
     try {
       const data = await packService.getPacks()
       setPacks(data)
+      
+      // Load ratings for all sellers
+      const ratingsObj: Record<string, { rating: number; count: number }> = {}
+      const uniqueSellers = new Set(data.map(p => p.seller_id))
+      
+      for (const sellerId of uniqueSellers) {
+        try {
+          const stats = await ratingService.getRatingsStats(sellerId)
+          ratingsObj[sellerId] = {
+            rating: stats.averageRating,
+            count: stats.totalRatings
+          }
+        } catch (error) {
+          console.error(`Error cargando stats para ${sellerId}:`, error)
+        }
+      }
+      setSellerRatings(ratingsObj)
     } catch (error) {
-      console.error(error)
+      console.error("Error cargando packs:", error)
     } finally {
       setLoading(false)
     }
@@ -146,9 +165,17 @@ export default function Home() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {packs.map((pack) => (
-              <PackCard key={pack.id} pack={pack} />
-            ))}
+            {packs.map((pack) => {
+              const ratingData = sellerRatings[pack.seller_id]
+              return (
+                <PackCard 
+                  key={pack.id} 
+                  pack={pack}
+                  sellerRating={ratingData?.rating}
+                  sellerRatingCount={ratingData?.count}
+                />
+              )
+            })}
           </div>
         )}
 

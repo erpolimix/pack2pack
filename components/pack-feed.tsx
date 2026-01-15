@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { PackCard } from "@/components/pack-card"
 import { type Pack, packService } from "@/services/packService"
+import { ratingService, type UserRatingsStats } from "@/services/ratingService"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Search } from "lucide-react"
@@ -15,12 +16,36 @@ interface PackFeedProps {
 export function PackFeed({ initialPacks }: PackFeedProps) {
     const [packs, setPacks] = useState<Pack[]>(initialPacks)
     const [search, setSearch] = useState("")
+    const [sellerRatings, setSellerRatings] = useState<Record<string, { rating: number; count: number }>>({})
 
     useEffect(() => {
         // Hydrate from localStorage if available (merging logic or replace)
         // For MVP, packService.getPacks() handles the logic of checking window/localStorage
         // so we can just re-fecth on mount to get "client" view
-        packService.getPacks().then(setPacks)
+        const loadPacks = async () => {
+            try {
+                const fetchedPacks = await packService.getPacks()
+                console.log("Packs cargados:", fetchedPacks.length)
+                setPacks(fetchedPacks)
+                
+                // Load ratings for all sellers
+                const ratingsObj: Record<string, { rating: number; count: number }> = {}
+                const uniqueSellers = new Set(fetchedPacks.map(p => p.seller_id))
+                
+                for (const sellerId of uniqueSellers) {
+                    const stats = await ratingService.getRatingsStats(sellerId)
+                    ratingsObj[sellerId] = {
+                        rating: stats.averageRating,
+                        count: stats.totalRatings
+                    }
+                }
+                setSellerRatings(ratingsObj)
+            } catch (error) {
+                console.error("Error cargando packs:", error)
+            }
+        }
+        
+        loadPacks()
     }, [])
 
     const filtered = packs.filter(p =>
@@ -44,9 +69,17 @@ export function PackFeed({ initialPacks }: PackFeedProps) {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {filtered.map(pack => (
-                    <PackCard key={pack.id} pack={pack} />
-                ))}
+                {filtered.map(pack => {
+                    const ratingData = sellerRatings[pack.seller_id]
+                    return (
+                        <PackCard 
+                            key={pack.id} 
+                            pack={pack}
+                            sellerRating={ratingData?.rating}
+                            sellerRatingCount={ratingData?.count}
+                        />
+                    )
+                })}
             </div>
 
             {filtered.length === 0 && (

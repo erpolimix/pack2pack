@@ -4,14 +4,17 @@ import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { packService, type Pack } from "@/services/packService"
 import { bookingService } from "@/services/bookingService"
+import { ratingService, type UserRatingsStats } from "@/services/ratingService"
 import { authService } from "@/services/authService"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Card } from "@/components/ui/card"
 import { Toast } from "@/components/ui/toast"
 import { useToast } from "@/lib/useToast"
-import { ArrowLeft, MapPin, Share2, Shield, User, Calendar, Clock } from "lucide-react"
+import { ArrowLeft, MapPin, Share2, Shield, User, Calendar, Clock, Star } from "lucide-react"
+import { RatingsDisplay } from "@/components/ratings-display"
 import Link from "next/link"
 import { Skeleton } from "@/components/ui/skeleton"
 import { User as UserType } from "@supabase/supabase-js"
@@ -26,6 +29,8 @@ export default function PackDetailPage() {
     const [showBookingModal, setShowBookingModal] = useState(false)
     const [bookingInProgress, setBookingInProgress] = useState(false)
     const [hasActiveBooking, setHasActiveBooking] = useState(false)
+    const [sellerRatingStats, setSellerRatingStats] = useState<UserRatingsStats | null>(null)
+    const [sellerRatings, setSellerRatings] = useState<any[]>([])
     
     // Booking form state
     const [selectedTimeWindow, setSelectedTimeWindow] = useState("")
@@ -42,6 +47,14 @@ export default function PackDetailPage() {
                     ])
                     setPack(foundPack)
                     setCurrentUser(user)
+                    
+                    // Load seller ratings
+                    if (foundPack) {
+                        const stats = await ratingService.getRatingsStats(foundPack.seller_id)
+                        const ratings = await ratingService.getRatingsForUser(foundPack.seller_id)
+                        setSellerRatingStats(stats)
+                        setSellerRatings(ratings)
+                    }
                     
                     // Check if user has active booking for this pack
                     if (user && foundPack) {
@@ -208,7 +221,67 @@ export default function PackDetailPage() {
                 </div>
             </div>
 
-            {/* Booking Modal */}
+            {/* Seller Info & Ratings Section */}
+            {pack && (
+                <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
+                    {/* Seller Card */}
+                    <div className="md:col-span-1">
+                        <Card className="p-6">
+                            <h3 className="text-lg font-bold text-brand-dark mb-4">Vendedor</h3>
+                            <div className="flex items-center gap-4 mb-6">
+                                <div className="w-12 h-12 rounded-full bg-brand-light flex items-center justify-center text-brand-primary font-bold">
+                                    {pack.sellerName.charAt(0)}
+                                </div>
+                                <div>
+                                    <Link href={`/profile?view=${pack.seller_id}`} className="font-semibold text-brand-dark hover:text-brand-primary transition-colors">
+                                        {pack.sellerName}
+                                    </Link>
+                                </div>
+                            </div>
+                            
+                            {/* Quick Rating Summary */}
+                            {sellerRatingStats && (
+                                <div className="bg-brand-light rounded-lg p-4 mb-4">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Star className="h-5 w-5 fill-brand-primary text-brand-primary" />
+                                        <span className="text-lg font-bold text-brand-primary">
+                                            {sellerRatingStats.averageRating.toFixed(1)}
+                                        </span>
+                                    </div>
+                                    <p className="text-sm text-gray-600">
+                                        {sellerRatingStats.totalRatings} {sellerRatingStats.totalRatings === 1 ? 'valoración' : 'valoraciones'}
+                                    </p>
+                                </div>
+                            )}
+                            
+                            <Link href={`/profile?view=${pack.seller_id}`}>
+                                <Button variant="outline" className="w-full rounded-xl">
+                                    Ver Perfil
+                                </Button>
+                            </Link>
+                        </Card>
+                    </div>
+
+                    {/* Ratings Display */}
+                    {sellerRatingStats && (
+                        <div className="md:col-span-2">
+                            <Card className="p-6">
+                                <h3 className="text-lg font-bold text-brand-dark mb-4 flex items-center gap-2">
+                                    <Star className="h-5 w-5 fill-brand-primary text-brand-primary" />
+                                    Valoraciones del Vendedor
+                                </h3>
+                                <RatingsDisplay
+                                    ratings={sellerRatings}
+                                    averageRating={sellerRatingStats.averageRating}
+                                    totalRatings={sellerRatingStats.totalRatings}
+                                    ratingDistribution={sellerRatingStats.ratingDistribution}
+                                />
+                            </Card>
+                        </div>
+                    )}
+                </div>
+            )}
+
             {showBookingModal && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
                     <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">

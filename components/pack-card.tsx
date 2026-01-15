@@ -1,16 +1,24 @@
 import Link from "next/link"
-import { Clock } from "lucide-react"
+import { Clock, Star } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import type { Pack } from "@/services/packService"
 
 interface PackCardProps {
     pack: Pack
+    sellerRating?: number
+    sellerRatingCount?: number
 }
 
-export function PackCard({ pack }: PackCardProps) {
+export function PackCard({ pack, sellerRating, sellerRatingCount }: PackCardProps) {
     // Determine random stock for visual flair if not present (simulated based on logic)
     const showLowStock = Math.random() > 0.7;
+    const averageRating = sellerRating || 0
+    const ratingCount = sellerRatingCount || 0
+    
+    if (sellerRating !== undefined) {
+        console.log(`PackCard ${pack.id}: Rating para ${pack.seller_id}:`, { sellerRating, sellerRatingCount })
+    }
 
     return (
         <Card className="pack-card group border-0 shadow-md hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden bg-white flex flex-col h-full relative">
@@ -47,9 +55,22 @@ export function PackCard({ pack }: PackCardProps) {
                         {pack.sellerName.charAt(0)}
                     </div>
                     <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-gray-800 truncate">{pack.sellerName}</p>
+                        <Link href={`/profile?view=${pack.seller_id}`} className="hover:text-brand-primary transition-colors">
+                            <p className="text-xs font-bold text-gray-800 truncate">{pack.sellerName}</p>
+                        </Link>
                         <div className="flex items-center text-[10px] text-gray-500">
-                            <span className="text-brand-accent mr-1">★</span> 4.9 <span className="ml-1">(12)</span>
+                            {averageRating > 0 ? (
+                                <>
+                                    <Star className="h-3 w-3 fill-brand-accent text-brand-accent mr-1" />
+                                    <span className="text-brand-accent font-semibold">{averageRating.toFixed(1)}</span>
+                                    <span className="ml-1">({ratingCount})</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Star className="h-3 w-3 text-gray-300 mr-1" />
+                                    <span className="text-gray-400">Sin valoraciones</span>
+                                </>
+                            )}
                         </div>
                     </div>
                     <div className="text-xs text-brand-primary font-bold bg-brand-light px-2 py-1 rounded-full">
