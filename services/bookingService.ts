@@ -61,10 +61,21 @@ export const bookingService = {
             .select('id, status')
             .eq('pack_id', packId)
             .eq('buyer_id', user.id)
-            .eq('status', 'pending')
+            .in('status', ['pending', 'confirmed'])
 
         if (existingBooking && existingBooking.length > 0) {
             throw new Error("Ya tienes una reserva activa para este pack")
+        }
+
+        // Check if pack is already booked by ANY user
+        const { data: anyActiveBooking } = await supabase
+            .from('bookings')
+            .select('id, status')
+            .eq('pack_id', packId)
+            .in('status', ['pending', 'confirmed'])
+
+        if (anyActiveBooking && anyActiveBooking.length > 0) {
+            throw new Error("Este pack ya ha sido reservado por otro usuario")
         }
 
         const pickupCode = this.generatePickupCode()
@@ -300,7 +311,7 @@ export const bookingService = {
     },
 
     /**
-     * Check if a pack has an active booking
+     * Check if a pack has an active booking (from current user)
      */
     async hasActiveBooking(packId: string): Promise<boolean> {
         const { data: { user } } = await supabase.auth.getUser()
@@ -315,6 +326,20 @@ export const bookingService = {
             .single()
 
         return !!data
+    },
+
+    /**
+     * Check if a pack is already booked by ANY user
+     */
+    async isPackBooked(packId: string): Promise<boolean> {
+        const { data } = await supabase
+            .from('bookings')
+            .select('id')
+            .eq('pack_id', packId)
+            .in('status', ['pending', 'confirmed'])
+            .limit(1)
+
+        return !!(data && data.length > 0)
     },
 
     /**

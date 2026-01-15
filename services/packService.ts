@@ -20,7 +20,8 @@ export interface Pack {
 
 export const packService = {
     async getPacks(): Promise<Pack[]> {
-        const { data, error } = await supabase
+        // First get all available packs
+        const { data: packs, error } = await supabase
             .from('packs')
             .select('*')
             .eq('status', 'available')
@@ -31,7 +32,20 @@ export const packService = {
             return []
         }
 
-        return (data || []).map(p => ({
+        if (!packs || packs.length === 0) return []
+
+        // Get all active bookings (pending or confirmed)
+        const { data: activeBookings } = await supabase
+            .from('bookings')
+            .select('pack_id')
+            .in('status', ['pending', 'confirmed'])
+
+        const bookedPackIds = new Set((activeBookings || []).map(b => b.pack_id))
+
+        // Filter out packs that are already booked
+        const availablePacks = packs.filter(p => !bookedPackIds.has(p.id))
+
+        return availablePacks.map(p => ({
             id: p.id,
             title: p.title,
             description: p.description,

@@ -29,6 +29,7 @@ export default function PackDetailPage() {
     const [showBookingModal, setShowBookingModal] = useState(false)
     const [bookingInProgress, setBookingInProgress] = useState(false)
     const [hasActiveBooking, setHasActiveBooking] = useState(false)
+    const [isPackBooked, setIsPackBooked] = useState(false)
     const [sellerRatingStats, setSellerRatingStats] = useState<UserRatingsStats | null>(null)
     const [sellerRatings, setSellerRatings] = useState<any[]>([])
     
@@ -61,6 +62,12 @@ export default function PackDetailPage() {
                         const hasBooking = await bookingService.hasActiveBooking(foundPack.id)
                         setHasActiveBooking(hasBooking)
                     }
+                    
+                    // Check if pack is booked by ANY user
+                    if (foundPack) {
+                        const packBooked = await bookingService.isPackBooked(foundPack.id)
+                        setIsPackBooked(packBooked)
+                    }
                 } catch (error) {
                     console.error("Error loading pack details:", error)
                 } finally {
@@ -80,6 +87,10 @@ export default function PackDetailPage() {
         }
         if (hasActiveBooking) {
             showError("Ya tienes una reserva activa para este pack")
+            return
+        }
+        if (isPackBooked) {
+            showError("Este pack ya ha sido reservado por otro usuario")
             return
         }
         setShowBookingModal(true)
@@ -183,10 +194,10 @@ export default function PackDetailPage() {
                         <Button
                             size="lg"
                             className="px-8 shadow-lg shadow-primary/20"
-                            disabled={isOwner || hasActiveBooking}
+                            disabled={isOwner || hasActiveBooking || isPackBooked}
                             onClick={handleReserveClick}
                         >
-                            {isOwner ? "Es tu propio pack" : hasActiveBooking ? "Ya reservado" : "Reservar ahora"}
+                            {isOwner ? "Es tu propio pack" : (hasActiveBooking || isPackBooked) ? "Ya reservado" : "Reservar ahora"}
                         </Button>
                     </div>
 
