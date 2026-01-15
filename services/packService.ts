@@ -15,6 +15,7 @@ export interface Pack {
     tags: string[];
     pickupLocation?: string;
     pickupWindows?: string[];
+    status: 'available' | 'sold' | 'expired' | 'archived';
 }
 
 export const packService = {
@@ -22,6 +23,7 @@ export const packService = {
         const { data, error } = await supabase
             .from('packs')
             .select('*')
+            .eq('status', 'available')
             .order('created_at', { ascending: false })
 
         if (error) {
@@ -44,6 +46,7 @@ export const packService = {
             tags: p.tags || [],
             pickupLocation: p.pickup_location,
             pickupWindows: p.pickup_windows || [],
+            status: p.status || 'available',
         }))
     },
 
@@ -74,10 +77,11 @@ export const packService = {
             tags: data.tags || [],
             pickupLocation: data.pickup_location,
             pickupWindows: data.pickup_windows || [],
+            status: data.status || 'available',
         }
     },
 
-    async createPack(pack: Omit<Pack, "id" | "expiresAt" | "seller_id">) {
+    async createPack(pack: Omit<Pack, "id" | "expiresAt" | "seller_id" | "status">) {
         // Get real user
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) throw new Error("Must be logged in to create a pack")
@@ -148,7 +152,10 @@ export const packService = {
             .delete()
             .eq('id', packId)
 
-        if (error) throw error
+        if (error) {
+            console.error("Error deleting pack:", error)
+            throw error
+        }
     },
 
     async getPacksByUser(userId: string): Promise<Pack[]> {
@@ -178,6 +185,7 @@ export const packService = {
             tags: p.tags || [],
             pickupLocation: p.pickup_location,
             pickupWindows: p.pickup_windows || [],
+            status: p.status || 'available',
         }))
     },
 
@@ -212,5 +220,32 @@ export const packService = {
             .eq('id', packId)
 
         if (error) throw error
+    },
+
+    async updatePackStatus(packId: string, status: 'available' | 'sold' | 'expired' | 'archived') {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) throw new Error("Must be logged in to update")
+
+        const { data: existingPack } = await supabase
+            .from('packs')
+            .select('seller_id')
+            .eq('id', packId)
+            .single()
+
+        if (!existingPack) throw new Error("Pack not found")
+        if (existingPack.seller_id !== user.id) {
+            throw new Error("Unauthorized: You can only update your own packs")
+        }
+
+        const { error } = await supabase
+            .from('packs')
+            .update({ status })
+            .eq('id', packId)
+
+        if (error) {
+            console.error("Error updating pack status:", error)
+            throw error
+        }
     }
 };
+

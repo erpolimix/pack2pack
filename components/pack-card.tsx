@@ -16,10 +16,6 @@ export function PackCard({ pack, sellerRating, sellerRatingCount }: PackCardProp
     const averageRating = sellerRating || 0
     const ratingCount = sellerRatingCount || 0
     
-    if (sellerRating !== undefined) {
-        console.log(`PackCard ${pack.id}: Rating para ${pack.seller_id}:`, { sellerRating, sellerRatingCount })
-    }
-
     return (
         <Card className="pack-card group border-0 shadow-md hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden bg-white flex flex-col h-full relative">
             {/* Image Section */}

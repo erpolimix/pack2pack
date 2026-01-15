@@ -15,7 +15,8 @@ export default function MyPacksPage() {
     const [loading, setLoading] = useState(true)
     const [user, setUser] = useState<any>(null)
     const [isModalOpen, setIsModalOpen] = useState(false)
-    const [packToDelete, setPackToDelete] = useState<string | null>(null)
+    const [packToMarkSold, setPackToMarkSold] = useState<string | null>(null)
+    const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
     const [toast, setToast] = useState<{ message: string; type: "success" | "error"; isVisible: boolean }>({
         message: "",
         type: "success",
@@ -46,23 +47,28 @@ export default function MyPacksPage() {
         setToast({ message, type, isVisible: true })
     }
 
-    const handleDeleteConfirmation = (packId: string) => {
-        setPackToDelete(packId)
+    const handleMarkAsSold = (packId: string) => {
+        setPackToMarkSold(packId)
         setIsModalOpen(true)
     }
 
-    const handleDelete = async () => {
-        if (packToDelete) {
+    const handleConfirmMarkSold = async () => {
+        if (packToMarkSold) {
+            setIsUpdatingStatus(true)
             try {
-                await packService.deletePack(packToDelete)
-                setPacks(packs.filter((pack) => pack.id !== packToDelete))
-                showToast("Pack eliminado correctamente", "success")
+                await packService.updatePackStatus(packToMarkSold, 'sold')
+                setPacks(packs.map((pack) =>
+                    pack.id === packToMarkSold ? { ...pack, status: 'sold' } : pack
+                ))
+                showToast("Pack marcado como vendido", "success")
             } catch (error) {
-                console.error("Error deleting pack:", error)
-                showToast("Error al eliminar el pack. Inténtalo de nuevo.", "error")
+                const errorMessage = error instanceof Error ? error.message : "Error desconocido"
+                console.error("Error marking pack as sold:", error)
+                showToast(`Error: ${errorMessage}`, "error")
             } finally {
+                setIsUpdatingStatus(false)
                 setIsModalOpen(false)
-                setPackToDelete(null)
+                setPackToMarkSold(null)
             }
         }
     }
@@ -123,7 +129,7 @@ export default function MyPacksPage() {
                             Empieza a compartir tus excedentes con la comunidad y ayuda a reducir el desperdicio.
                         </p>
                         <Button asChild className="bg-brand-primary text-white hover:bg-brand-dark font-bold rounded-xl px-8 h-12 shadow-lg shadow-brand-primary/30">
-                            <Link href="/create-pack">
+                            <Link href="/create">
                                 <PackagePlus className="mr-2 h-5 w-5" />
                                 Crear mi primer pack
                             </Link>
@@ -136,7 +142,7 @@ export default function MyPacksPage() {
                                 <span className="font-bold text-brand-primary">{packs.length}</span> {packs.length === 1 ? 'pack publicado' : 'packs publicados'}
                             </p>
                             <Button asChild className="bg-brand-primary text-white hover:bg-brand-dark font-bold rounded-xl text-sm">
-                                <Link href="/create-pack">
+                                <Link href="/create">
                                     <PackagePlus className="mr-2 h-4 w-4" />
                                     Nuevo Pack
                                 </Link>
@@ -148,7 +154,7 @@ export default function MyPacksPage() {
                                 <MyPackCard
                                     key={pack.id}
                                     pack={pack}
-                                    onDelete={handleDeleteConfirmation}
+                                    onMarkSold={handleMarkAsSold}
                                 />
                             ))}
                         </div>
@@ -160,11 +166,11 @@ export default function MyPacksPage() {
             <Modal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                onConfirm={handleDelete}
-                title="¿Eliminar este pack?"
-                description="Esta acción no se puede deshacer. El pack será eliminado permanentemente."
+                onConfirm={handleConfirmMarkSold}
+                title="Marcar como vendido"
+                description="¿Estás seguro de que quieres marcar este pack como vendido? Se ocultará de la página principal pero se mantendrá en tu historial."
                 cancelText="Cancelar"
-                confirmText="Eliminar"
+                confirmText={isUpdatingStatus ? "Actualizando..." : "Marcar como vendido"}
             />
 
             {/* Toast Notification */}

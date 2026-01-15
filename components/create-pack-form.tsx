@@ -107,14 +107,15 @@ export function CreatePackForm() {
         }
         reader.readAsDataURL(file)
 
-        // Auto-analyze
+        // Auto-analyze with AI
         setIsAnalyzing(true)
         try {
-            const aiDesc = await aiService.generateDescription(file)
-            if (aiDesc && !aiDesc.startsWith("No se ha podido")) {
-                setDescription(aiDesc)
-                // Heuristic title guess based on description
-                setTitle(aiDesc.split(' ').slice(0, 3).join(' ') + " Pack")
+            const aiSuggestion = await aiService.generateTitleAndDescription(file)
+            if (aiSuggestion.title && !aiSuggestion.title.startsWith("No se ha podido")) {
+                setTitle(aiSuggestion.title)
+            }
+            if (aiSuggestion.description && !aiSuggestion.description.startsWith("No se ha podido")) {
+                setDescription(aiSuggestion.description)
             }
         } catch (error) {
             console.error("AI Error", error)
