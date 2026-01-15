@@ -34,16 +34,29 @@ export const packService = {
 
         if (!packs || packs.length === 0) return []
 
+        console.log(`[packService] Total packs disponibles: ${packs.length}`)
+
         // Get all active bookings (pending or confirmed)
-        const { data: activeBookings } = await supabase
+        const { data: activeBookings, error: bookingsError } = await supabase
             .from('bookings')
             .select('pack_id')
             .in('status', ['pending', 'confirmed'])
+
+        if (bookingsError) {
+            console.error("Error fetching bookings:", bookingsError)
+        }
+
+        console.log(`[packService] Reservas activas encontradas: ${activeBookings?.length || 0}`)
+        if (activeBookings && activeBookings.length > 0) {
+            console.log('[packService] Pack IDs reservados:', activeBookings.map(b => b.pack_id))
+        }
 
         const bookedPackIds = new Set((activeBookings || []).map(b => b.pack_id))
 
         // Filter out packs that are already booked
         const availablePacks = packs.filter(p => !bookedPackIds.has(p.id))
+
+        console.log(`[packService] Packs disponibles después de filtrar: ${availablePacks.length}`)
 
         return availablePacks.map(p => ({
             id: p.id,
