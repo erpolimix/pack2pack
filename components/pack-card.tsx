@@ -32,10 +32,6 @@ export function PackCard({ pack, sellerRating, sellerRatingCount }: PackCardProp
         <Card className="pack-card group border-0 shadow-md hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden bg-white flex flex-col h-full relative">
             {/* Image Section */}
             <div className="relative h-48 overflow-hidden">
-                <button className="absolute top-3 right-3 z-10 w-8 h-8 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center text-gray-400 hover:text-brand-alert hover:bg-white transition-colors shadow-sm">
-                    <Clock className="h-4 w-4" /> {/* Using Clock as placeholder for Heart/Favorite logic if needed */}
-                </button>
-
                 <img
                     src={pack.imageUrl}
                     alt={pack.title}
