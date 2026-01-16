@@ -31,14 +31,14 @@ export default function HowItWorksPage() {
 
                 <div className="container mx-auto text-center max-w-4xl animate-in fade-in slide-in-from-bottom-8 duration-700 px-6 sm:px-8">
                     <Badge variant="outline" className="mb-6 px-4 py-1.5 text-sm border-brand-primary text-brand-primary bg-brand-primary/5">
-                        <Leaf className="w-3.5 h-3.5 mr-2" /> Movimiento Anti-Desperdicio
+                        <Leaf className="w-3.5 h-3.5 mr-2" /> Economía Circular Vecinal
                     </Badge>
                     <h1 className="text-4xl md:text-6xl font-extrabold text-brand-dark tracking-tight mb-6">
-                        Salva comida, ahorra dinero y <span className="text-brand-primary">ayuda al planeta</span>.
+                        Da nueva vida a lo que no usas y <span className="text-brand-primary">ayuda al planeta</span>.
                     </h1>
                     <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
                         Únete a la comunidad que está cambiando la forma en que consumimos.
-                        Conecta con personas de tu zona y rescata excedentes de calidad a precios increíbles.
+                        Conecta con vecinos de tu zona y compra/vende productos en buen estado a precios increíbles.
                     </p>
 
                     {/* Role Switcher */}
@@ -74,11 +74,11 @@ export default function HowItWorksPage() {
                 <div className="container mx-auto max-w-5xl">
                     <div className="text-center mb-16">
                         <h2 className="text-3xl font-bold text-brand-dark mb-4">
-                            {activeTab === "buyer" ? "Tu camino hacia el ahorro" : "Dale una segunda vida a tus alimentos"}
+                            {activeTab === "buyer" ? "Tu camino hacia el ahorro" : "Dale una segunda vida a tus productos"}
                         </h2>
                         <p className="text-muted-foreground">
                             {activeTab === "buyer"
-                                ? "Descubre lo fácil que es rescatar tu primer pack cerca de ti."
+                                ? "Descubre lo fácil que es conseguir tu primer pack cerca de ti."
                                 : "Cuatro pasos sencillos para evitar el desperdicio y recuperar dinero."}
                         </p>
                     </div>
@@ -215,19 +215,19 @@ export default function HowItWorksPage() {
                 <div className="space-y-4">
                     <FaqItem
                         question="¿Qué contiene un Pack Sorpresa?"
-                        answer="El contenido exacto es sorpresa porque depende de lo que le sobre a tu vecino ese día. Sin embargo, se garantiza que los alimentos están en buen estado y el valor es superior al precio simbólico que pagas."
+                        answer="El contenido exacto depende de lo que le sobre a tu vecino ese día: pueden ser alimentos, libros, ropa, juguetes, decoración, etc. Todos los productos están en buen estado y el valor es siempre superior al precio que pagas."
                     />
                     <FaqItem
                         question="¿Cómo funciona la recogida?"
-                        answer="Al reservar, se abrirá un chat o se mostrará el punto de encuentro acordado (puede ser un portal, una plaza, etc.). Acudes a la hora pactada, muestras tu reserva y recoges tu pack."
+                        answer="Al reservar, se abrirá un chat o se mostrará el punto de encuentro acordado (puede ser un portal, una plaza, etc.). Acudes a la hora pactada, muestras tu código de reserva y recoges tu pack."
                     />
                     <FaqItem
-                        question="¿Qué pasa si tengo alergias?"
-                        answer="Al ser un intercambio entre particulares de comida variada, es difícil garantizar ausencia de trazas. Recomendamos preguntar al vendedor por el chat antes de consumir si tienes alguna alergia severa."
+                        question="¿Qué tipo de productos puedo vender?"
+                        answer="Puedes vender cualquier cosa que tengas en casa y ya no uses: alimentos excedentes, ropa que no te pones, libros leídos, juguetes de tus hijos, decoración, electrodomésticos pequeños, etc. Lo importante es que estén en buen estado."
                     />
                     <FaqItem
                         question="¿Cómo empiezo a vender?"
-                        answer="Es muy sencillo. Pulsa en 'Quiero Vender', sube una foto de tus alimentos excedentes y publica. En cuanto un vecino lo reserve, acordaréis la entrega."
+                        answer="Es muy sencillo. Pulsa en 'Quiero Vender', sube una foto de tus productos excedentes, describe qué incluyes y publica. En cuanto un vecino lo reserve, acordaréis la entrega."
                     />
                 </div>
             </section>
@@ -243,7 +243,7 @@ export default function HowItWorksPage() {
                     </Button>
                     <Button asChild variant="outline" size="lg" className="rounded-full px-8 h-14 text-lg border-2 hover:bg-white hover:text-brand-primary">
                         <Link href="/create">
-                            Vender mis excedentes
+                            Vender productos
                         </Link>
                     </Button>
                 </div>

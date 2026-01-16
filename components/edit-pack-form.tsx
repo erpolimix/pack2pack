@@ -245,7 +245,7 @@ export function EditPackForm({ pack, onSuccess }: EditPackFormProps) {
                 <div className="space-y-2">
                     <Label>Título</Label>
                     <Input
-                        placeholder="ej. Pack de inicio de cocina"
+                        placeholder="ej. Pack de libros juveniles, Lote de ropa bebé, etc."
                         value={title}
                         onChange={e => setTitle(e.target.value)}
                         required

@@ -15,7 +15,7 @@ export function Footer() {
                             <span className="font-bold text-2xl">pack2pack</span>
                         </div>
                         <p className="text-gray-400 text-sm leading-relaxed">
-                            La plataforma P2P líder para el intercambio de alimentos y reducción de desperdicios. Únete a la revolución verde desde tu barrio.
+                            La plataforma P2P líder para el intercambio de productos entre vecinos y reducción de desperdicios. Únete a la economía circular desde tu barrio.
                         </p>
                     </div>
 
@@ -32,10 +32,11 @@ export function Footer() {
 
                     {/* Comunidad Column */}
                     <div>
-                        <h4 className="font-bold text-lg mb-4">Comunidad</h4>
+                        <h4 className="font-bold text-lg mb-4">Legal</h4>
                         <ul className="space-y-2 text-gray-400 text-sm">
-                            <li><Link href="#" className="hover:text-brand-accent transition-colors">Reglas de convivencia</Link></li>
-                            <li><Link href="#" className="hover:text-brand-accent transition-colors">Seguridad y Confianza</Link></li>
+                            <li><Link href="/legal/privacy" className="hover:text-brand-accent transition-colors">Política de Privacidad</Link></li>
+                            <li><Link href="/legal/cookies" className="hover:text-brand-accent transition-colors">Política de Cookies</Link></li>
+                            <li><Link href="/legal/terms" className="hover:text-brand-accent transition-colors">Términos y Condiciones</Link></li>
                             <li><Link href="#" className="hover:text-brand-accent transition-colors">Centro de Ayuda</Link></li>
                         </ul>
                     </div>
@@ -69,11 +70,6 @@ export function Footer() {
                 {/* Bottom Bar */}
                 <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-gray-500">
                     <p>&copy; 2026 Pack2pack Inc. Todos los derechos reservados.</p>
-                    <div className="flex space-x-6 mt-4 md:mt-0">
-                        <Link href="#" className="hover:text-white transition-colors">Privacidad</Link>
-                        <Link href="#" className="hover:text-white transition-colors">Términos</Link>
-                        <Link href="#" className="hover:text-white transition-colors">Cookies</Link>
-                    </div>
                 </div>
             </div>
         </footer>

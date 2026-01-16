@@ -229,7 +229,7 @@ export function CreatePackForm() {
                 <div className="space-y-2">
                     <Label>Título</Label>
                     <Input
-                        placeholder="ej. Pack de inicio de cocina"
+                        placeholder="ej. Pack de libros juveniles, Lote de ropa bebé, etc."
                         value={title}
                         onChange={e => setTitle(e.target.value)}
                         required
@@ -262,7 +262,7 @@ export function CreatePackForm() {
                         </Button>
                     </div>
                     <Textarea
-                        placeholder="¿Qué hay en el pack?"
+                        placeholder="¿Qué incluye tu pack? Describe los productos que estás ofreciendo..."
                         value={description}
                         onChange={e => setDescription(e.target.value)}
                         className="h-24 resize-none"

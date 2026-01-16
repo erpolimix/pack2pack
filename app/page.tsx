@@ -65,7 +65,7 @@ export default function Home() {
               <span className="text-brand-primary">es el tesoro de tu vecino.</span>
             </h1>
             <p className="text-lg text-gray-600 mb-8 leading-relaxed max-w-lg">
-              Únete a la comunidad P2P que lucha contra el desperdicio. Compra packs sorpresa de comida casera, excedentes de huerto o despensa a precios increíbles.
+              Únete a la comunidad P2P que da segunda vida a todo. Compra y vende packs de alimentos, ropa, libros, juguetes, decoración y mucho más a precios increíbles.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">
@@ -87,7 +87,7 @@ export default function Home() {
               {/* Placeholder image if we don't have a specific one, or use a reliable external one like in the design proposal */}
               <img
                 src="https://images.unsplash.com/photo-1595475207225-428b62bda831?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
-                alt="Frutas y verduras frescas"
+                alt="Pack2Pack - Marketplace de productos entre vecinos"
                 className="w-full h-auto object-cover"
               />
 
@@ -116,30 +116,39 @@ export default function Home() {
             </Button>
             <Button variant="outline" className="rounded-full bg-white border-gray-200 text-gray-600 font-semibold text-sm hover:border-brand-primary hover:text-brand-primary transition-colors hover:bg-white/50 flex items-center gap-2 cursor-pointer">
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              Huerto
-            </Button>
-            <Button variant="outline" className="rounded-full bg-white border-gray-200 text-gray-600 font-semibold text-sm hover:border-brand-primary hover:text-brand-primary transition-colors hover:bg-white/50 flex items-center gap-2 cursor-pointer">
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
-              Panadería
+              Alimentos
             </Button>
             <Button variant="outline" className="rounded-full bg-white border-gray-200 text-gray-600 font-semibold text-sm hover:border-brand-primary hover:text-brand-primary transition-colors hover:bg-white/50 flex items-center gap-2 cursor-pointer">
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
               </svg>
-              Cocinado
+              Libros
+            </Button>
+            <Button variant="outline" className="rounded-full bg-white border-gray-200 text-gray-600 font-semibold text-sm hover:border-brand-primary hover:text-brand-primary transition-colors hover:bg-white/50 flex items-center gap-2 cursor-pointer">
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.121 15.536c-1.171 1.952-3.07 1.952-4.242 0-1.172-1.953-1.172-5.119 0-7.072 1.171-1.952 3.07-1.952 4.242 0M8 10.5h4m-4 3h4m9-1.5a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Ropa
+            </Button>
+            <Button variant="outline" className="rounded-full bg-white border-gray-200 text-gray-600 font-semibold text-sm hover:border-brand-primary hover:text-brand-primary transition-colors hover:bg-white/50 flex items-center gap-2 cursor-pointer">
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Juguetes
+            </Button>
+            <Button variant="outline" className="rounded-full bg-white border-gray-200 text-gray-600 font-semibold text-sm hover:border-brand-primary hover:text-brand-primary transition-colors hover:bg-white/50 flex items-center gap-2 cursor-pointer">
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+              Hogar
             </Button>
             <Button variant="outline" className="rounded-full bg-white border-gray-200 text-gray-600 font-semibold text-sm hover:border-brand-primary hover:text-brand-primary transition-colors hover:bg-white/50 flex items-center gap-2 cursor-pointer">
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
               </svg>
               Pack Sorpresa
-            </Button>
-            <Button variant="outline" className="rounded-full bg-white border-gray-200 text-gray-600 font-semibold text-sm hover:border-brand-primary hover:text-brand-primary transition-colors hover:bg-white/50 flex items-center gap-2 cursor-pointer">
-              <Leaf className="h-4 w-4" /> Vegano
             </Button>
           </div>
         </div>
@@ -186,14 +195,14 @@ export default function Home() {
               <CheckCircle2 className="w-8 h-8" />
             </div>
             <h3 className="font-bold text-lg text-brand-dark mb-2">Ahorra Dinero</h3>
-            <p className="text-gray-500 text-sm">Consigue comida de calidad por un tercio de su precio original.</p>
+            <p className="text-gray-500 text-sm">Consigue productos de calidad a precios increíbles de tus vecinos.</p>
           </div>
           <div className="flex flex-col items-center">
             <div className="w-16 h-16 bg-brand-light rounded-2xl flex items-center justify-center text-brand-primary mb-4 p-4">
               <Leaf className="w-8 h-8" />
             </div>
-            <h3 className="font-bold text-lg text-brand-dark mb-2">Ayuda al Planeta</h3>
-            <p className="text-gray-500 text-sm">Cada pack salvado reduce el desperdicio y las emisiones de CO2.</p>
+            <h3 className="font-bold text-lg text-brand-dark mb-2">Consumo Responsable</h3>
+            <p className="text-gray-500 text-sm">Da segunda vida a productos y reduce el desperdicio en tu comunidad.</p>
           </div>
           <div className="flex flex-col items-center">
             <div className="w-16 h-16 bg-brand-light rounded-2xl flex items-center justify-center text-brand-primary mb-4 p-4">

@@ -50,15 +50,15 @@ export default function LoginPage() {
                 <div className="absolute inset-0 z-10 bg-gradient-to-r from-brand-dark/80 to-transparent" />
                 <img
                     src="/login-hero.png"
-                    alt="Sustainable Community Market"
+                    alt="Vecinos compartiendo productos en comunidad"
                     className="absolute inset-0 object-cover w-full h-full opacity-60"
                 />
                 <div className="relative z-20 flex flex-col justify-center p-16 text-white max-w-xl">
                     <h1 className="text-5xl font-extrabold tracking-tight mb-6 leading-tight">
-                        Salva comida, conecta con tu <span className="text-brand-accent">comunidad</span>.
+                        Compra, vende y conecta con tu <span className="text-brand-accent">comunidad</span>.
                     </h1>
                     <p className="text-xl text-brand-light/90 leading-relaxed italic">
-                        "Cada pack rescatado es un paso más hacia un planeta sin desperdicio y una comunidad más unida."
+                        "Cada pack vendido es un producto que encuentra nueva vida y una comunidad más unida y sostenible."
                     </p>
                     <div className="mt-12 flex items-center space-x-4">
                         <div className="flex -space-x-2">

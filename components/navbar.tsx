@@ -42,13 +42,13 @@ export function Navbar() {
 
     return (
         <header className="sticky top-0 z-50 w-full border-b border-brand-primary/10 bg-brand-cream/80 backdrop-blur-md">
-            <div className="container mx-auto flex h-16 items-center justify-between px-6 sm:px-8 lg:px-12">
+            <div className="container mx-auto flex h-14 sm:h-16 items-center justify-between px-3 sm:px-6 lg:px-12">
                 {/* Logo */}
-                <Link href="/" className="flex items-center gap-2 group cursor-pointer flex-shrink-0">
-                    <div className="w-8 h-8 bg-brand-primary rounded-lg flex items-center justify-center text-white shadow-sm group-hover:bg-brand-dark transition-colors">
-                        <Package2 className="h-5 w-5" />
+                <Link href="/" className="flex items-center gap-1.5 sm:gap-2 group cursor-pointer flex-shrink-0">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 bg-brand-primary rounded-lg flex items-center justify-center text-white shadow-sm group-hover:bg-brand-dark transition-colors">
+                        <Package2 className="h-4 w-4 sm:h-5 sm:w-5" />
                     </div>
-                    <span className="font-bold text-2xl tracking-tight text-brand-primary">pack<span className="text-brand-dark">2</span>pack</span>
+                    <span className="font-bold text-lg sm:text-2xl tracking-tight text-brand-primary">pack<span className="text-brand-dark">2</span>pack</span>
                 </Link>
 
                 {/* Desktop Search */}
@@ -69,15 +69,15 @@ export function Navbar() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-2 sm:gap-4">
+                <div className="flex items-center gap-1.5 sm:gap-4">
                     <Link href="/how-it-works" className="text-sm font-semibold text-brand-dark hover:text-brand-primary hidden sm:block transition-colors">
                         Cómo funciona
                     </Link>
 
                     {/* Vender Pack - Visible en todos los dispositivos */}
                     <Link href="/create">
-                        <Button className="bg-brand-primary hover:bg-brand-dark text-white rounded-full font-bold shadow-lg shadow-brand-primary/20 transition-all text-sm px-4 sm:px-6">
-                            <PlusCircle className="mr-2 h-4 w-4" />
+                        <Button className="bg-brand-primary hover:bg-brand-dark text-white rounded-full font-bold shadow-lg shadow-brand-primary/20 transition-all text-xs sm:text-sm px-3 py-1.5 sm:px-6 sm:py-2 h-auto">
+                            <PlusCircle className="mr-1 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
                             <span className="hidden sm:inline">Vender Pack</span>
                             <span className="sm:hidden">Vender</span>
                         </Button>
@@ -89,16 +89,16 @@ export function Navbar() {
                     {user ? (
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="rounded-full border border-transparent hover:border-brand-primary/20 hover:bg-brand-primary/5">
+                                <Button variant="ghost" size="icon" className="rounded-full border border-transparent hover:border-brand-primary/20 hover:bg-brand-primary/5 h-8 w-8 sm:h-10 sm:w-10">
                                     {user.user_metadata?.avatar_url ? (
                                         <img
                                             src={user.user_metadata.avatar_url}
                                             alt="Avatar"
-                                            className="w-9 h-9 rounded-full object-cover border-2 border-white shadow-sm"
+                                            className="w-7 h-7 sm:w-9 sm:h-9 rounded-full object-cover border-2 border-white shadow-sm"
                                         />
                                     ) : (
-                                        <div className="w-9 h-9 rounded-full bg-brand-light flex items-center justify-center text-brand-primary">
-                                            <User className="h-5 w-5" />
+                                        <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-brand-light flex items-center justify-center text-brand-primary">
+                                            <User className="h-4 w-4 sm:h-5 sm:w-5" />
                                         </div>
                                     )}
                                 </Button>
@@ -128,7 +128,7 @@ export function Navbar() {
                         </DropdownMenu>
                     ) : (
                         <Link href="/login">
-                            <Button variant="ghost" className="font-bold text-brand-dark hover:text-brand-primary hover:bg-transparent px-2">
+                            <Button variant="ghost" className="font-bold text-brand-dark hover:text-brand-primary hover:bg-transparent px-2 text-xs sm:text-sm">
                                 Inicia sesión
                             </Button>
                         </Link>
