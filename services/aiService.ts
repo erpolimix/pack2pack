@@ -9,6 +9,11 @@ export interface AIPackSuggestion {
     description: string;
 }
 
+export interface AICategoryDetection {
+    category: string;
+    confidence: string;
+}
+
 export const aiService = {
     async generateDescription(_file: File): Promise<string> {
         try {
@@ -27,6 +32,55 @@ export const aiService = {
         } catch (error) {
             console.error("Gemini AI Error:", error);
             return "No se ha podido generar la descripción automáticamente.";
+        }
+    },
+
+    async detectCategory(file: File, description: string): Promise<string> {
+        try {
+            if (!apiKey) {
+                console.warn("GEMINI_API_KEY is not set.");
+                return "Sin categoría";
+            }
+
+            const base64Data = await this.fileToGenerativePart(file);
+
+            const prompt = `Analiza esta imagen de un pack de productos y la siguiente descripción, y categorízalo en UNA ÚNICA categoría de esta lista:
+- Alimentos
+- Libros
+- Ropa
+- Juguetes
+- Hogar
+- Otro
+
+Descripción del pack: "${description}"
+
+Responde ÚNICAMENTE con el nombre de la categoría sin explicaciones adicionales. Ejemplo: "Alimentos"`;
+
+            const result = await model.generateContent([prompt, base64Data]);
+            const response = result.response;
+            let category = response.text().trim();
+
+            // Validar que la respuesta sea una de las categorías permitidas
+            const validCategories = ['Alimentos', 'Libros', 'Ropa', 'Juguetes', 'Hogar', 'Otro'];
+            
+            // Normalizar respuesta (puede venir con espacios, minúsculas, etc)
+            category = category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
+            
+            // Verificar si está en la lista válida
+            if (!validCategories.some(cat => cat.toLowerCase() === category.toLowerCase())) {
+                // Si no coincide exactamente, intentar encontrar la más similar
+                const match = validCategories.find(cat => 
+                    category.toLowerCase().includes(cat.toLowerCase()) || 
+                    cat.toLowerCase().includes(category.toLowerCase())
+                );
+                category = match || 'Otro';
+            }
+
+            console.log(`[aiService] Categoría detectada: ${category}`);
+            return category;
+        } catch (error) {
+            console.error("Gemini AI Category Detection Error:", error);
+            return "Otro";
         }
     },
 

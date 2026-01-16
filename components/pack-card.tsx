@@ -11,21 +11,27 @@ interface PackCardProps {
 }
 
 export function PackCard({ pack, sellerRating, sellerRatingCount }: PackCardProps) {
-    // Determine random stock for visual flair if not present (simulated based on logic)
-    const showLowStock = Math.random() > 0.7;
     const averageRating = sellerRating || 0
     const ratingCount = sellerRatingCount || 0
+    
+    // Calcular tiempo restante
+    const now = new Date().getTime()
+    const expiresTime = new Date(pack.expiresAt).getTime()
+    const timeRemaining = expiresTime - now
+    
+    const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24))
+    const hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+    
+    const timeText = days > 0 
+        ? `Faltan ${days}d ${hours}h`
+        : hours > 0 
+        ? `Faltan ${hours}h`
+        : 'Expirando pronto'
     
     return (
         <Card className="pack-card group border-0 shadow-md hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden bg-white flex flex-col h-full relative">
             {/* Image Section */}
             <div className="relative h-48 overflow-hidden">
-                {showLowStock && (
-                    <div className="absolute top-3 left-3 bg-brand-alert text-white text-xs font-bold px-2 py-1 rounded-md z-10 shadow-sm animate-pulse">
-                        ¡Solo quedan 2!
-                    </div>
-                )}
-
                 <button className="absolute top-3 right-3 z-10 w-8 h-8 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center text-gray-400 hover:text-brand-alert hover:bg-white transition-colors shadow-sm">
                     <Clock className="h-4 w-4" /> {/* Using Clock as placeholder for Heart/Favorite logic if needed */}
                 </button>
@@ -38,7 +44,7 @@ export function PackCard({ pack, sellerRating, sellerRatingCount }: PackCardProp
 
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
                     <span className="text-white text-xs font-bold bg-black/30 backdrop-blur-md px-2 py-1 rounded-lg border border-white/20 flex items-center w-fit">
-                        <Clock className="mr-1 h-3 w-3" /> {new Date(pack.expiresAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        <Clock className="mr-1 h-3 w-3" /> {timeText}
                     </span>
                 </div>
             </div>

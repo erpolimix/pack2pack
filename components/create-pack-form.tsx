@@ -25,6 +25,7 @@ export function CreatePackForm() {
     const [originalPrice, setOriginalPrice] = useState("")
     const [tagInput, setTagInput] = useState("")
     const [pickupLocation, setPickupLocation] = useState("")
+    const [category, setCategory] = useState<string>("Otro") // Nueva categoría automática
     
     // Time windows with visual picker
     type TimeSlot = { day: string; time: string; label: string }
@@ -112,6 +113,9 @@ export function CreatePackForm() {
             }
             if (aiSuggestion.description && !aiSuggestion.description.startsWith("No se ha podido")) {
                 setDescription(aiSuggestion.description)
+                // Detectar categoría automáticamente basada en la descripción
+                const detectedCategory = await aiService.detectCategory(file, aiSuggestion.description)
+                setCategory(detectedCategory)
             }
         } catch (error) {
             console.error("AI Error", error)
@@ -140,6 +144,7 @@ export function CreatePackForm() {
                 originalPrice: Number.parseFloat(originalPrice) || 0,
                 imageUrl: finalImageUrl,
                 tags: tagInput.split(',').map(t => t.trim()).filter(Boolean),
+                category: category, // Guardar la categoría detectada
                 location: "Mi Barrio",
                 distance: "0.5 km",
                 sellerName: "Usuario Demo",

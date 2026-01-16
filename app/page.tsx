@@ -13,11 +13,16 @@ import Link from "next/link"
 export default function Home() {
   const [packs, setPacks] = useState<Pack[]>([])
   const [loading, setLoading] = useState(true)
+  const [selectedCategory, setSelectedCategory] = useState<string>('todo')
   const [sellerRatings, setSellerRatings] = useState<Record<string, { rating: number; count: number }>>({})
 
   useEffect(() => {
     loadPacks()
   }, [])
+
+  useEffect(() => {
+    loadPacksByCategory()
+  }, [selectedCategory])
 
   const loadPacks = async () => {
     try {
@@ -42,6 +47,40 @@ export default function Home() {
       setSellerRatings(ratingsObj)
     } catch (error) {
       console.error("Error cargando packs:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadPacksByCategory = async () => {
+    if (selectedCategory === 'todo') {
+      loadPacks()
+      return
+    }
+
+    setLoading(true)
+    try {
+      const data = await packService.getPacksByCategory(selectedCategory)
+      setPacks(data)
+      
+      // Load ratings for all sellers
+      const ratingsObj: Record<string, { rating: number; count: number }> = {}
+      const uniqueSellers = new Set(data.map(p => p.seller_id))
+      
+      for (const sellerId of uniqueSellers) {
+        try {
+          const stats = await ratingService.getRatingsStats(sellerId)
+          ratingsObj[sellerId] = {
+            rating: stats.averageRating,
+            count: stats.totalRatings
+          }
+        } catch (error) {
+          console.error(`Error cargando stats para ${sellerId}:`, error)
+        }
+      }
+      setSellerRatings(ratingsObj)
+    } catch (error) {
+      console.error("Error cargando packs por categoría:", error)
     } finally {
       setLoading(false)
     }
@@ -111,44 +150,72 @@ export default function Home() {
       <div className="sticky top-16 z-40 bg-brand-cream/95 backdrop-blur-sm border-b border-brand-primary/5 py-4 shadow-sm">
         <div className="container mx-auto overflow-x-auto no-scrollbar px-6 sm:px-8">
           <div className="flex space-x-3 md:space-x-4 min-w-max">
-            <Button variant="default" className="rounded-full bg-brand-dark text-white hover:bg-brand-dark/90 font-bold text-sm shadow-md transition-transform transform active:scale-95 flex items-center gap-2 cursor-pointer">
+            <Button 
+              onClick={() => setSelectedCategory('todo')}
+              variant={selectedCategory === 'todo' ? 'default' : 'outline'}
+              className={selectedCategory === 'todo' ? "rounded-full bg-brand-dark text-white hover:bg-brand-dark/90 font-bold text-sm shadow-md transition-transform transform active:scale-95 flex items-center gap-2 cursor-pointer" : "rounded-full bg-white border-gray-200 text-gray-600 font-semibold text-sm hover:border-brand-primary hover:text-brand-primary transition-colors hover:bg-white/50 flex items-center gap-2 cursor-pointer"}
+            >
               <Leaf className="h-4 w-4" /> Todo
             </Button>
-            <Button variant="outline" className="rounded-full bg-white border-gray-200 text-gray-600 font-semibold text-sm hover:border-brand-primary hover:text-brand-primary transition-colors hover:bg-white/50 flex items-center gap-2 cursor-pointer">
+            <Button 
+              onClick={() => setSelectedCategory('Alimentos')}
+              variant={selectedCategory === 'Alimentos' ? 'default' : 'outline'}
+              className={selectedCategory === 'Alimentos' ? "rounded-full bg-brand-dark text-white hover:bg-brand-dark/90 font-bold text-sm shadow-md transition-transform transform active:scale-95 flex items-center gap-2 cursor-pointer" : "rounded-full bg-white border-gray-200 text-gray-600 font-semibold text-sm hover:border-brand-primary hover:text-brand-primary transition-colors hover:bg-white/50 flex items-center gap-2 cursor-pointer"}
+            >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
               Alimentos
             </Button>
-            <Button variant="outline" className="rounded-full bg-white border-gray-200 text-gray-600 font-semibold text-sm hover:border-brand-primary hover:text-brand-primary transition-colors hover:bg-white/50 flex items-center gap-2 cursor-pointer">
+            <Button 
+              onClick={() => setSelectedCategory('Libros')}
+              variant={selectedCategory === 'Libros' ? 'default' : 'outline'}
+              className={selectedCategory === 'Libros' ? "rounded-full bg-brand-dark text-white hover:bg-brand-dark/90 font-bold text-sm shadow-md transition-transform transform active:scale-95 flex items-center gap-2 cursor-pointer" : "rounded-full bg-white border-gray-200 text-gray-600 font-semibold text-sm hover:border-brand-primary hover:text-brand-primary transition-colors hover:bg-white/50 flex items-center gap-2 cursor-pointer"}
+            >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
               </svg>
               Libros
             </Button>
-            <Button variant="outline" className="rounded-full bg-white border-gray-200 text-gray-600 font-semibold text-sm hover:border-brand-primary hover:text-brand-primary transition-colors hover:bg-white/50 flex items-center gap-2 cursor-pointer">
+            <Button 
+              onClick={() => setSelectedCategory('Ropa')}
+              variant={selectedCategory === 'Ropa' ? 'default' : 'outline'}
+              className={selectedCategory === 'Ropa' ? "rounded-full bg-brand-dark text-white hover:bg-brand-dark/90 font-bold text-sm shadow-md transition-transform transform active:scale-95 flex items-center gap-2 cursor-pointer" : "rounded-full bg-white border-gray-200 text-gray-600 font-semibold text-sm hover:border-brand-primary hover:text-brand-primary transition-colors hover:bg-white/50 flex items-center gap-2 cursor-pointer"}
+            >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.121 15.536c-1.171 1.952-3.07 1.952-4.242 0-1.172-1.953-1.172-5.119 0-7.072 1.171-1.952 3.07-1.952 4.242 0M8 10.5h4m-4 3h4m9-1.5a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               Ropa
             </Button>
-            <Button variant="outline" className="rounded-full bg-white border-gray-200 text-gray-600 font-semibold text-sm hover:border-brand-primary hover:text-brand-primary transition-colors hover:bg-white/50 flex items-center gap-2 cursor-pointer">
+            <Button 
+              onClick={() => setSelectedCategory('Juguetes')}
+              variant={selectedCategory === 'Juguetes' ? 'default' : 'outline'}
+              className={selectedCategory === 'Juguetes' ? "rounded-full bg-brand-dark text-white hover:bg-brand-dark/90 font-bold text-sm shadow-md transition-transform transform active:scale-95 flex items-center gap-2 cursor-pointer" : "rounded-full bg-white border-gray-200 text-gray-600 font-semibold text-sm hover:border-brand-primary hover:text-brand-primary transition-colors hover:bg-white/50 flex items-center gap-2 cursor-pointer"}
+            >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               Juguetes
             </Button>
-            <Button variant="outline" className="rounded-full bg-white border-gray-200 text-gray-600 font-semibold text-sm hover:border-brand-primary hover:text-brand-primary transition-colors hover:bg-white/50 flex items-center gap-2 cursor-pointer">
+            <Button 
+              onClick={() => setSelectedCategory('Hogar')}
+              variant={selectedCategory === 'Hogar' ? 'default' : 'outline'}
+              className={selectedCategory === 'Hogar' ? "rounded-full bg-brand-dark text-white hover:bg-brand-dark/90 font-bold text-sm shadow-md transition-transform transform active:scale-95 flex items-center gap-2 cursor-pointer" : "rounded-full bg-white border-gray-200 text-gray-600 font-semibold text-sm hover:border-brand-primary hover:text-brand-primary transition-colors hover:bg-white/50 flex items-center gap-2 cursor-pointer"}
+            >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
               </svg>
               Hogar
             </Button>
-            <Button variant="outline" className="rounded-full bg-white border-gray-200 text-gray-600 font-semibold text-sm hover:border-brand-primary hover:text-brand-primary transition-colors hover:bg-white/50 flex items-center gap-2 cursor-pointer">
+            <Button 
+              onClick={() => setSelectedCategory('Otro')}
+              variant={selectedCategory === 'Otro' ? 'default' : 'outline'}
+              className={selectedCategory === 'Otro' ? "rounded-full bg-brand-dark text-white hover:bg-brand-dark/90 font-bold text-sm shadow-md transition-transform transform active:scale-95 flex items-center gap-2 cursor-pointer" : "rounded-full bg-white border-gray-200 text-gray-600 font-semibold text-sm hover:border-brand-primary hover:text-brand-primary transition-colors hover:bg-white/50 flex items-center gap-2 cursor-pointer"}
+            >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
               </svg>
-              Pack Sorpresa
+              Otros
             </Button>
           </div>
         </div>

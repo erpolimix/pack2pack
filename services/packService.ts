@@ -13,6 +13,7 @@ export interface Pack {
     distance: string;
     expiresAt: string;
     tags: string[];
+    category?: string; // Nueva categoría automática
     pickupLocation?: string;
     pickupWindows?: string[];
     status: 'available' | 'reserved' | 'sold' | 'expired' | 'archived';
@@ -102,6 +103,7 @@ export const packService = {
             distance: data.distance,
             expiresAt: data.expires_at,
             tags: data.tags || [],
+            category: data.category || 'Sin categoría', // Incluir categoría
             pickupLocation: data.pickup_location,
             pickupWindows: data.pickup_windows || [],
             status: data.status || 'available',
@@ -122,6 +124,7 @@ export const packService = {
                 original_price: pack.originalPrice,
                 image_url: pack.imageUrl,
                 tags: pack.tags,
+                category: pack.category || 'Sin categoría', // Guardar la categoría
                 location: pack.location,
                 distance: pack.distance,
                 pickup_location: pack.pickupLocation,
@@ -210,6 +213,7 @@ export const packService = {
             distance: p.distance,
             expiresAt: p.expires_at,
             tags: p.tags || [],
+            category: p.category || 'Sin categoría', // Incluir categoría
             pickupLocation: p.pickup_location,
             pickupWindows: p.pickup_windows || [],
             status: p.status || 'available',
@@ -326,6 +330,48 @@ export const packService = {
             throw error
         }
         
+    },
+
+    /**
+     * Get packs filtered by category
+     * Uses case-insensitive search (ilike) for flexibility
+     */
+    async getPacksByCategory(category: string): Promise<Pack[]> {
+        // If "todo" or empty, return all packs
+        if (!category || category === 'todo') {
+            return this.getPacks()
+        }
+
+        const { data, error } = await supabase
+            .from('packs')
+            .select('*')
+            .eq('status', 'available')
+            .ilike('category', `%${category}%`)
+            .order('created_at', { ascending: false })
+
+        if (error) {
+            console.error("[getPacksByCategory] Error fetching packs:", error)
+            return []
+        }
+
+        return (data || []).map(p => ({
+            id: p.id,
+            title: p.title,
+            description: p.description,
+            price: Number(p.price),
+            originalPrice: Number(p.original_price),
+            imageUrl: p.image_url,
+            sellerName: p.seller_name,
+            seller_id: p.seller_id,
+            location: p.location,
+            distance: p.distance,
+            expiresAt: p.expires_at,
+            tags: p.tags || [],
+            category: p.category || 'Sin categoría',
+            pickupLocation: p.pickup_location,
+            pickupWindows: p.pickup_windows || [],
+            status: p.status || 'available',
+        }))
     }
 };
 
