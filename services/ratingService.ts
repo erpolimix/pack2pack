@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase"
+import { notificationService } from "@/services/notificationService"
 
 export interface Rating {
     id: string
@@ -36,7 +37,7 @@ export const ratingService = {
         // Get booking details to verify it belongs to the current user as buyer
         const { data: booking, error: bookingError } = await supabase
             .from('bookings')
-            .select('id, buyer_id, seller_id, status')
+            .select('id, buyer_id, seller_id, status, packs!bookings_pack_id_fkey (title)')
             .eq('id', bookingId)
             .single()
 
@@ -53,6 +54,13 @@ export const ratingService = {
 
         if (existingRating) throw new Error("This transaction has already been rated")
 
+        // Get rater profile for notification
+        const { data: raterProfile } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', user.id)
+            .single()
+
         // Create the rating
         const { data, error } = await supabase
             .from('ratings')
@@ -67,6 +75,20 @@ export const ratingService = {
             .single()
 
         if (error) throw error
+
+        // Send notification to the rated user
+        try {
+            const raterName = raterProfile?.full_name || 'Un usuario'
+            const packTitle = (booking as any).packs?.title || 'un pack'
+            await notificationService.notifyRatingReceived(
+                booking.seller_id,
+                raterName,
+                rating,
+                packTitle
+            )
+        } catch (notifError) {
+            console.error("Error sending notification:", notifError)
+        }
 
         return mapRatingFromDb(data)
     },
@@ -142,11 +164,17 @@ export const ratingService = {
      * Check if a booking has been rated
      */
     async isBookingRated(bookingId: string): Promise<boolean> {
-        const { data } = await supabase
+        const { data, error } = await supabase
             .from('ratings')
             .select('id')
             .eq('booking_id', bookingId)
-            .single()
+            .maybeSingle()
+
+        // If there's an RLS error, assume not rated
+        if (error) {
+            console.log('[isBookingRated] Error (probably RLS):', error.message)
+            return false
+        }
 
         return !!data
     },

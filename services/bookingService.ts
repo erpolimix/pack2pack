@@ -1,4 +1,6 @@
 import { supabase } from "@/lib/supabase"
+import { notificationService } from "@/services/notificationService"
+import { packService } from "@/services/packService"
 
 export type BookingStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled'
 
@@ -94,6 +96,22 @@ export const bookingService = {
             .single()
 
         if (error) throw error
+
+        // Mark pack as reserved
+        try {
+            await packService.markPackAsReserved(packId)
+        } catch (packError) {
+            console.error("Error marking pack as reserved:", packError)
+            // Don't fail the booking if pack update fails
+        }
+
+        // Send notification to seller
+        try {
+            await notificationService.notifyNewBooking(pack.seller_id, pack.title, data.id)
+        } catch (notifError) {
+            console.error("Error sending notification:", notifError)
+            // Don't fail the booking if notification fails
+        }
 
         return this.mapBookingFromDb(data)
     },
@@ -208,10 +226,10 @@ export const bookingService = {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) throw new Error("Must be logged in")
 
-        // Get booking
+        // Get booking with pack info
         const { data: booking, error: fetchError } = await supabase
             .from('bookings')
-            .select('seller_id, pickup_code, status, validated_by_buyer')
+            .select('seller_id, buyer_id, pickup_code, status, validated_by_buyer, pack_id, packs!bookings_pack_id_fkey (title)')
             .eq('id', bookingId)
             .single()
 
@@ -232,7 +250,8 @@ export const bookingService = {
         }
 
         // If buyer also validated, mark as completed
-        if (booking.validated_by_buyer) {
+        const willComplete = booking.validated_by_buyer
+        if (willComplete) {
             updates.status = 'completed'
             updates.validated_at = new Date().toISOString()
         }
@@ -243,6 +262,30 @@ export const bookingService = {
             .eq('id', bookingId)
 
         if (updateError) throw updateError
+
+        // If transaction completed, mark pack as sold
+        if (willComplete) {
+            try {
+                await packService.markPackAsSold(booking.pack_id)
+            } catch (packError) {
+                console.error("Error updating pack status:", packError)
+            }
+        }
+
+        // Send notifications
+        try {
+            const packTitle = (booking as any).packs?.title || 'tu pack'
+            
+            // Notify buyer that seller validated
+            await notificationService.notifySellerValidated(booking.buyer_id, packTitle, bookingId)
+
+            // If transaction completed, notify both
+            if (willComplete) {
+                await notificationService.notifyTransactionCompleted(booking.buyer_id, booking.seller_id, packTitle, bookingId)
+            }
+        } catch (notifError) {
+            console.error("Error sending notification:", notifError)
+        }
     },
 
     /**
@@ -252,10 +295,10 @@ export const bookingService = {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) throw new Error("Must be logged in")
 
-        // Get booking
+        // Get booking with pack info
         const { data: booking, error: fetchError } = await supabase
             .from('bookings')
-            .select('buyer_id, status, validated_by_seller')
+            .select('buyer_id, seller_id, status, validated_by_seller, pack_id, packs!bookings_pack_id_fkey (title)')
             .eq('id', bookingId)
             .single()
 
@@ -270,7 +313,10 @@ export const bookingService = {
         }
 
         // If seller also validated, mark as completed
-        if (booking.validated_by_seller) {
+        const willComplete = booking.validated_by_seller
+        console.log(`[validateByBuyer] validated_by_seller: ${booking.validated_by_seller}, willComplete: ${willComplete}`)
+        
+        if (willComplete) {
             updates.status = 'completed'
             updates.validated_at = new Date().toISOString()
         }
@@ -281,6 +327,34 @@ export const bookingService = {
             .eq('id', bookingId)
 
         if (updateError) throw updateError
+
+        // If transaction completed, mark pack as sold
+        if (willComplete) {
+            try {
+                await packService.markPackAsSold(booking.pack_id)
+            } catch (packError) {
+                console.error("Error updating pack status:", packError)
+                // Re-throw the error so it's not silenced
+                throw new Error(`Failed to mark pack as sold: ${packError}`)
+            }
+        } else {
+            console.log(`[validateByBuyer] No se marca como sold porque vendedor aún no ha validado`)
+        }
+
+        // Send notifications
+        try {
+            const packTitle = (booking as any).packs?.title || 'el pack'
+            
+            // Notify seller that buyer confirmed
+            await notificationService.notifyBuyerConfirmed(booking.seller_id, packTitle, bookingId)
+
+            // If transaction completed, notify both
+            if (willComplete) {
+                await notificationService.notifyTransactionCompleted(booking.buyer_id, booking.seller_id, packTitle, bookingId)
+            }
+        } catch (notifError) {
+            console.error("Error sending notification:", notifError)
+        }
     },
 
     /**
@@ -292,7 +366,7 @@ export const bookingService = {
 
         const { data: booking, error: fetchError } = await supabase
             .from('bookings')
-            .select('buyer_id, status')
+            .select('buyer_id, seller_id, status, pack_id, packs!bookings_pack_id_fkey (title)')
             .eq('id', bookingId)
             .single()
 
@@ -308,6 +382,21 @@ export const bookingService = {
             .eq('id', bookingId)
 
         if (error) throw error
+
+        // Mark pack as available again
+        try {
+            await packService.markPackAsAvailable(booking.pack_id)
+        } catch (packError) {
+            console.error("Error marking pack as available:", packError)
+        }
+
+        // Notify seller about cancellation
+        try {
+            const packTitle = (booking as any).packs?.title || 'un pack'
+            await notificationService.notifyBookingCancelled(booking.seller_id, packTitle)
+        } catch (notifError) {
+            console.error("Error sending notification:", notifError)
+        }
     },
 
     /**
@@ -317,13 +406,19 @@ export const bookingService = {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return false
 
-        const { data } = await supabase
+        const { data, error } = await supabase
             .from('bookings')
             .select('id')
             .eq('pack_id', packId)
             .eq('buyer_id', user.id)
             .in('status', ['pending', 'confirmed'])
-            .single()
+            .maybeSingle()  // Returns null if no match, instead of error
+
+        // If there's an RLS error, assume no booking
+        if (error) {
+            console.log('[hasActiveBooking] Error (probably RLS):', error.message)
+            return false
+        }
 
         return !!data
     },
@@ -332,14 +427,21 @@ export const bookingService = {
      * Check if a pack is already booked by ANY user
      */
     async isPackBooked(packId: string): Promise<boolean> {
-        const { data } = await supabase
+        const { data, error } = await supabase
             .from('bookings')
             .select('id')
             .eq('pack_id', packId)
             .in('status', ['pending', 'confirmed'])
             .limit(1)
+            .maybeSingle()  // Returns null if no match
 
-        return !!(data && data.length > 0)
+        // If there's an RLS error, log it but don't fail
+        if (error) {
+            console.log('[isPackBooked] Error (probably RLS):', error.message)
+            return false
+        }
+
+        return !!data
     },
 
     /**

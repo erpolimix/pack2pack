@@ -19,6 +19,28 @@ import Link from "next/link"
 import { Skeleton } from "@/components/ui/skeleton"
 import { User as UserType } from "@supabase/supabase-js"
 
+// Helper function to sort and parse time windows
+function sortTimeWindows(windows: string[]): string[] {
+    // Parse date from strings like "Hoy 16/01/2026 09:00-12:00" or "Mañana 18:00-21:00"
+    const parseDate = (window: string): Date => {
+        // Try to extract DD/MM/YYYY format
+        const dateMatch = window.match(/(\d{2})\/(\d{2})\/(\d{4})/)
+        if (dateMatch) {
+            const [_, day, month, year] = dateMatch
+            return new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
+        }
+        
+        // Fallback for old format - return a date far in the future so it sorts last
+        return new Date(9999, 0, 1)
+    }
+
+    return windows.sort((a, b) => {
+        const dateA = parseDate(a)
+        const dateB = parseDate(b)
+        return dateA.getTime() - dateB.getTime()
+    })
+}
+
 export default function PackDetailPage() {
     const params = useParams()
     const router = useRouter()
@@ -319,7 +341,7 @@ export default function PackDetailPage() {
                                 </Label>
                                 <div className="space-y-2 max-h-64 overflow-y-auto">
                                     {pack?.pickupWindows && pack.pickupWindows.length > 0 ? (
-                                        pack.pickupWindows.map((window, index) => (
+                                        sortTimeWindows(pack.pickupWindows).map((window, index) => (
                                             <label
                                                 key={index}
                                                 className={`

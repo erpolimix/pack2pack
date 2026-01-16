@@ -34,25 +34,21 @@ export function CreatePackForm() {
     const generateAvailableOptions = () => {
         const now = new Date()
         const currentHour = now.getHours()
-        const currentDay = now.getDay() // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
         
-        // Define all day options with their day numbers
-        const allDays = [
-            { value: "today", label: "Hoy", dayNumber: currentDay },
-            { value: "tomorrow", label: "Mañana", dayNumber: (currentDay + 1) % 7 },
-            { value: "dayAfter", label: "Pasado mañana", dayNumber: (currentDay + 2) % 7 },
-        ]
-        
-        // Add Saturday if not in the next 3 days
-        const saturdayOffset = (6 - currentDay + 7) % 7
-        if (saturdayOffset > 2) {
-            allDays.push({ value: "saturday", label: "Sábado", dayNumber: 6 })
-        }
-        
-        // Add Sunday if not in the next 3 days
-        const sundayOffset = (7 - currentDay) % 7
-        if (sundayOffset > 2) {
-            allDays.push({ value: "sunday", label: "Domingo", dayNumber: 0 })
+        // Generate next 7 days with exact dates
+        const allDays = []
+        for (let i = 0; i < 7; i++) {
+            const date = new Date(now)
+            date.setDate(date.getDate() + i)
+            const dateStr = date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })
+            const dayName = i === 0 ? 'Hoy' : i === 1 ? 'Mañana' : date.toLocaleDateString('es-ES', { weekday: 'long' })
+            
+            allDays.push({
+                value: i.toString(),
+                label: `${dayName.charAt(0).toUpperCase() + dayName.slice(1)} ${dateStr}`,
+                date: date.toISOString().split('T')[0], // YYYY-MM-DD
+                dayOffset: i
+            })
         }
 
         // All time slots with their hour ranges
@@ -64,8 +60,8 @@ export function CreatePackForm() {
         ]
 
         // Filter time slots for "today" - only show slots that haven't passed
-        const getAvailableTimeSlotsForDay = (dayValue: string) => {
-            if (dayValue === "today") {
+        const getAvailableTimeSlotsForDay = (dayOffset: number) => {
+            if (dayOffset === 0) {
                 // For today, only show slots where current hour < slot end hour - 1
                 // (give at least 1 hour buffer)
                 return allTimeSlots.filter(slot => currentHour < slot.endHour - 1)
@@ -293,7 +289,7 @@ export function CreatePackForm() {
                     
                     <div className="bg-gray-50 rounded-lg p-4 space-y-4">
                         {dayOptions.map((day) => {
-                            const availableTimeSlots = getAvailableTimeSlotsForDay(day.value)
+                            const availableTimeSlots = getAvailableTimeSlotsForDay(day.dayOffset)
                             
                             // Don't show day if no time slots available
                             if (availableTimeSlots.length === 0) return null

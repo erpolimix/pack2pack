@@ -15,7 +15,7 @@ export interface Pack {
     tags: string[];
     pickupLocation?: string;
     pickupWindows?: string[];
-    status: 'available' | 'sold' | 'expired' | 'archived';
+    status: 'available' | 'reserved' | 'sold' | 'expired' | 'archived';
 }
 
 export const packService = {
@@ -273,6 +273,59 @@ export const packService = {
             console.error("Error updating pack status:", error)
             throw error
         }
+    },
+
+    /**
+     * Internal method to mark pack as sold after transaction completion
+     * Used by bookingService when both parties validate the transaction
+     * Uses a PostgreSQL function with SECURITY DEFINER to bypass RLS
+     */
+    async markPackAsSold(packId: string): Promise<void> {
+        
+        // Call PostgreSQL function with SECURITY DEFINER to bypass RLS
+        const { error } = await supabase.rpc('mark_pack_as_sold', {
+            pack_id_param: packId
+        })
+
+        if (error) {
+            console.error("[markPackAsSold] Error al actualizar:", error)
+            throw error
+        }
+        
+    },
+
+    /**
+     * Internal method to mark pack as reserved when booking is created
+     * Uses a PostgreSQL function with SECURITY DEFINER to bypass RLS
+     */
+    async markPackAsReserved(packId: string): Promise<void> {
+        
+        const { error } = await supabase.rpc('mark_pack_as_reserved', {
+            pack_id_param: packId
+        })
+
+        if (error) {
+            console.error("[markPackAsReserved] Error al actualizar:", error)
+            throw error
+        }
+        
+    },
+
+    /**
+     * Internal method to mark pack as available when booking is cancelled
+     * Uses a PostgreSQL function with SECURITY DEFINER to bypass RLS
+     */
+    async markPackAsAvailable(packId: string): Promise<void> {
+        
+        const { error } = await supabase.rpc('mark_pack_as_available', {
+            pack_id_param: packId
+        })
+
+        if (error) {
+            console.error("[markPackAsAvailable] Error al actualizar:", error)
+            throw error
+        }
+        
     }
 };
 

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { useEffect, useState } from "react"
 import { authService } from "@/services/authService"
 import { useRouter } from "next/navigation"
+import { NotificationBell } from "@/components/notification-bell"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -81,6 +82,9 @@ export function Navbar() {
                             <span className="sm:hidden">Vender</span>
                         </Button>
                     </Link>
+
+                    {/* Notification Bell - Solo visible para usuarios autenticados */}
+                    {user && <NotificationBell />}
 
                     {user ? (
                         <DropdownMenu>
