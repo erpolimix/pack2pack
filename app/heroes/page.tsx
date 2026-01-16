@@ -47,7 +47,7 @@ export default function HeroesPage() {
   }
 
   const getCategoryIcon = (category: string) => {
-    const icons: Record<string, JSX.Element> = {
+    const icons: Record<string, React.ReactElement> = {
       'Ropa': <Shirt size={16} className="text-white" />,
       'Libros': <BookOpen size={16} className="text-white" />,
       'Juguetes': <Package size={16} className="text-white" />,
