@@ -1,7 +1,8 @@
 import Link from "next/link"
-import { Clock, Star } from "lucide-react"
+import { Clock, Star, MapPin } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { geoService } from "@/services/geoService"
 import type { Pack } from "@/services/packService"
 
 interface PackCardProps {
@@ -28,6 +29,9 @@ export function PackCard({ pack, sellerRating, sellerRatingCount }: PackCardProp
         ? `Faltan ${hours}h`
         : 'Expirando pronto'
     
+    // Formatear distancia si está disponible
+    const distanceText = pack.distanceKm ? geoService.formatDistance(pack.distanceKm) : null
+    
     return (
         <Card className="pack-card group border-0 shadow-md hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden bg-white flex flex-col h-full relative">
             {/* Image Section */}
@@ -37,6 +41,14 @@ export function PackCard({ pack, sellerRating, sellerRatingCount }: PackCardProp
                     alt={pack.title}
                     className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
                 />
+
+                {/* Badge de distancia */}
+                {distanceText && (
+                    <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg text-xs font-bold text-brand-primary flex items-center gap-1">
+                        <MapPin size={12} />
+                        {distanceText}
+                    </div>
+                )}
 
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
                     <span className="text-white text-xs font-bold bg-black/30 backdrop-blur-md px-2 py-1 rounded-lg border border-white/20 flex items-center w-fit">

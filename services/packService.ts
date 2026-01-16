@@ -17,6 +17,12 @@ export interface Pack {
     pickupLocation?: string;
     pickupWindows?: string[];
     status: 'available' | 'reserved' | 'sold' | 'expired' | 'archived';
+    // Geolocalización
+    latitude?: number;
+    longitude?: number;
+    city?: string;
+    neighborhood?: string;
+    distanceKm?: number; // Calculado desde ubicación del usuario
 }
 
 export const packService = {
@@ -75,6 +81,11 @@ export const packService = {
             pickupLocation: p.pickup_location,
             pickupWindows: p.pickup_windows || [],
             status: p.status || 'available',
+            // Campos de geolocalización
+            latitude: p.latitude,
+            longitude: p.longitude,
+            city: p.city,
+            neighborhood: p.neighborhood,
         }))
     },
 
@@ -107,6 +118,11 @@ export const packService = {
             pickupLocation: data.pickup_location,
             pickupWindows: data.pickup_windows || [],
             status: data.status || 'available',
+            // Campos de geolocalización
+            latitude: data.latitude,
+            longitude: data.longitude,
+            city: data.city,
+            neighborhood: data.neighborhood,
         }
     },
 
@@ -129,6 +145,11 @@ export const packService = {
                 distance: pack.distance,
                 pickup_location: pack.pickupLocation,
                 pickup_windows: pack.pickupWindows || [],
+                // Guardar geolocalización
+                latitude: pack.latitude,
+                longitude: pack.longitude,
+                city: pack.city,
+                neighborhood: pack.neighborhood,
                 seller_id: user.id,
                 seller_name: user.user_metadata.full_name || pack.sellerName || "Usuario Pack2Pack",
                 expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
@@ -372,6 +393,80 @@ export const packService = {
             pickupWindows: p.pickup_windows || [],
             status: p.status || 'available',
         }))
+    },
+
+    /**
+     * Get packs sorted by proximity to user location
+     * @param userCoords User's current coordinates
+     * @param radiusKm Maximum distance in kilometers (default: 50km)
+     */
+    async getPacksByProximity(userCoords: { latitude: number; longitude: number }, radiusKm: number = 50): Promise<Pack[]> {
+        const { geoService } = await import('@/services/geoService')
+
+        // Get all available packs with location data
+        const { data: packs, error } = await supabase
+            .from('packs')
+            .select('*')
+            .eq('status', 'available')
+            .not('latitude', 'is', null)
+            .not('longitude', 'is', null)
+            .order('created_at', { ascending: false })
+
+        if (error) {
+            console.error("[getPacksByProximity] Error fetching packs:", error)
+            return []
+        }
+
+        if (!packs || packs.length === 0) return []
+
+        // Get active bookings to filter out reserved packs
+        const { data: activeBookings } = await supabase
+            .from('bookings')
+            .select('pack_id')
+            .in('status', ['pending', 'confirmed'])
+
+        const bookedPackIds = new Set((activeBookings || []).map(b => b.pack_id))
+
+        // Calculate distance for each pack and filter by radius
+        const packsWithDistance = packs
+            .filter(p => !bookedPackIds.has(p.id))
+            .map(p => {
+                const distance = geoService.calculateDistance(
+                    userCoords,
+                    { latitude: p.latitude!, longitude: p.longitude! }
+                )
+                
+                return {
+                    id: p.id,
+                    title: p.title,
+                    description: p.description,
+                    price: Number(p.price),
+                    originalPrice: Number(p.original_price),
+                    imageUrl: p.image_url,
+                    sellerName: p.seller_name,
+                    seller_id: p.seller_id,
+                    location: p.location,
+                    distance: p.distance,
+                    expiresAt: p.expires_at,
+                    tags: p.tags || [],
+                    category: p.category || 'Sin categoría',
+                    pickupLocation: p.pickup_location,
+                    pickupWindows: p.pickup_windows || [],
+                    status: p.status || 'available',
+                    latitude: p.latitude,
+                    longitude: p.longitude,
+                    city: p.city,
+                    neighborhood: p.neighborhood,
+                    distanceKm: distance
+                } as Pack
+            })
+            .filter(p => p.distanceKm! <= radiusKm)
+            .sort((a, b) => (a.distanceKm || 0) - (b.distanceKm || 0))
+
+        console.log(`[getPacksByProximity] Encontrados ${packsWithDistance.length} packs dentro de ${radiusKm}km`)
+        
+        return packsWithDistance
     }
 };
+
 

@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect, Suspense } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { authService } from "@/services/authService"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,19 +9,28 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2 } from "lucide-react"
 
-export default function LoginPage() {
+function LoginContent() {
     const router = useRouter()
+    const searchParams = useSearchParams()
     const [email, setEmail] = useState("")
     const [isLoading, setIsLoading] = useState(false)
     const [isGoogleLoading, setIsGoogleLoading] = useState(false)
     const [message, setMessage] = useState("")
+    const [redirectPath, setRedirectPath] = useState("/")
+
+    useEffect(() => {
+        const redirect = searchParams.get('redirect')
+        if (redirect) {
+            setRedirectPath(redirect)
+        }
+    }, [searchParams])
 
     const handleEmailLogin = async (e: React.FormEvent) => {
         e.preventDefault()
         setIsLoading(true)
         setMessage("")
         try {
-            await authService.loginWithEmail(email)
+            await authService.loginWithEmail(email, redirectPath)
             setMessage("¡Enlace mágico enviado! Revisa tu correo.")
         } catch (error) {
             console.error(error)
@@ -34,7 +43,7 @@ export default function LoginPage() {
     const handleGoogleLogin = async () => {
         setIsGoogleLoading(true)
         try {
-            await authService.loginWithGoogle()
+            await authService.loginWithGoogle(redirectPath)
         } catch (error) {
             console.error(error)
         } finally {
@@ -81,7 +90,13 @@ export default function LoginPage() {
                     <CardHeader className="space-y-2 pb-8 text-center lg:text-left">
                         <CardTitle className="text-3xl font-bold text-brand-dark">Inicia Sesión</CardTitle>
                         <CardDescription className="text-base">
-                            Entra para publicar o reservar packs con tus vecinos.
+                            {redirectPath !== "/" ? (
+                                <span className="text-brand-primary font-medium">
+                                    Debes iniciar sesión para continuar
+                                </span>
+                            ) : (
+                                "Entra para publicar o reservar packs con tus vecinos."
+                            )}
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
@@ -150,5 +165,17 @@ export default function LoginPage() {
                 </Card>
             </div>
         </div>
+    )
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
+                <Loader2 className="w-8 h-8 animate-spin text-brand-primary" />
+            </div>
+        }>
+            <LoginContent />
+        </Suspense>
     )
 }

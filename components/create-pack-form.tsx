@@ -1,14 +1,16 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { aiService } from "@/services/aiService"
 import { packService } from "@/services/packService"
+import { geoService, type Location } from "@/services/geoService"
+import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { Camera, Loader2, Sparkles } from "lucide-react"
+import { Camera, Loader2, Sparkles, MapPin } from "lucide-react"
 import Image from "next/image"
 
 export function CreatePackForm() {
@@ -27,9 +29,37 @@ export function CreatePackForm() {
     const [pickupLocation, setPickupLocation] = useState("")
     const [category, setCategory] = useState<string>("Otro") // Nueva categoría automática
     
+    // Geolocalización
+    const [userLocation, setUserLocation] = useState<Location | null>(null)
+    const [loadingLocation, setLoadingLocation] = useState(true)
+
     // Time windows with visual picker
     type TimeSlot = { day: string; time: string; label: string }
     const [selectedSlots, setSelectedSlots] = useState<TimeSlot[]>([])
+
+    // Obtener ubicación del usuario al montar
+    useEffect(() => {
+        const loadLocation = async () => {
+            try {
+                // Intentar obtener ubicación guardada
+                const saved = geoService.getUserLocation()
+                if (saved) {
+                    setUserLocation(saved)
+                } else {
+                    // Si no hay guardada, intentar obtener actual
+                    const coords = await geoService.getCurrentPosition()
+                    const location = await geoService.reverseGeocode(coords)
+                    setUserLocation(location)
+                    geoService.saveUserLocation(location)
+                }
+            } catch (error) {
+                console.error("Error obteniendo ubicación:", error)
+            } finally {
+                setLoadingLocation(false)
+            }
+        }
+        loadLocation()
+    }, [])
 
     // Generate smart day and time options based on current time
     const generateAvailableOptions = () => {
@@ -128,6 +158,28 @@ export function CreatePackForm() {
         e.preventDefault()
         setIsLoading(true)
 
+        // Validar autenticación ANTES de cualquier otra cosa
+        const { data: { session }, error: authError } = await supabase.auth.getSession()
+        if (authError || !session) {
+            alert("Debes iniciar sesión para crear un pack")
+            router.push('/login?redirect=/create')
+            setIsLoading(false)
+            return
+        }
+
+        // Validación de campos
+        if (!title.trim() || !description.trim() || !price || !originalPrice) {
+            alert("Por favor, completa todos los campos requeridos")
+            setIsLoading(false)
+            return
+        }
+
+        if (selectedSlots.length === 0) {
+            alert("Por favor, selecciona al menos una franja horaria de recogida")
+            setIsLoading(false)
+            return
+        }
+
         try {
             // 1. Upload image if exists
             let finalImageUrl = imagePreview || "https://images.unsplash.com/photo-1546213290-e1fc4f6d4f75?auto=format&fit=crop&q=80&w=600"
@@ -150,6 +202,11 @@ export function CreatePackForm() {
                 sellerName: "Usuario Demo",
                 pickupLocation: pickupLocation || "Mi Barrio",
                 pickupWindows: selectedSlots.map(s => s.label),
+                // Añadir geolocalización
+                latitude: userLocation?.coordinates.latitude,
+                longitude: userLocation?.coordinates.longitude,
+                city: userLocation?.city,
+                neighborhood: userLocation?.neighborhood,
             })
             router.push('/')
         } catch (error) {
@@ -167,6 +224,20 @@ export function CreatePackForm() {
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6 max-w-lg mx-auto p-6 bg-card rounded-xl border shadow-sm">
+
+            {/* Ubicación Preview */}
+            {userLocation && (
+                <div className="bg-brand-light/50 border border-brand-primary/20 rounded-xl p-4 flex items-start gap-3">
+                    <MapPin className="w-5 h-5 text-brand-primary flex-shrink-0 mt-0.5" />
+                    <div>
+                        <p className="text-sm font-bold text-brand-dark">Tu pack se publicará en:</p>
+                        <p className="text-sm text-gray-700">
+                            {userLocation.neighborhood && `${userLocation.neighborhood}, `}
+                            {userLocation.city}
+                        </p>
+                    </div>
+                </div>
+            )}
 
             {/* Image Upload Area */}
             <div className="space-y-2">

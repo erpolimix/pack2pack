@@ -1,12 +1,16 @@
 import { supabase } from "@/lib/supabase"
 
 export const authService = {
-    async loginWithEmail(email: string) {
+    async loginWithEmail(email: string, redirectPath?: string) {
+        const callbackUrl = redirectPath 
+            ? `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectPath)}`
+            : `${window.location.origin}/auth/callback`
+
         const { data, error } = await supabase.auth.signInWithOtp({
             email,
             options: {
                 shouldCreateUser: true,
-                emailRedirectTo: `${window.location.origin}/auth/callback`,
+                emailRedirectTo: callbackUrl,
             },
         })
 
@@ -14,11 +18,15 @@ export const authService = {
         return data
     },
 
-    async loginWithGoogle() {
+    async loginWithGoogle(redirectPath?: string) {
+        const callbackUrl = redirectPath 
+            ? `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectPath)}`
+            : `${window.location.origin}/auth/callback`
+
         const { data, error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: `${window.location.origin}/auth/callback`,
+                redirectTo: callbackUrl,
                 queryParams: {
                     access_type: 'offline',
                     prompt: 'consent',

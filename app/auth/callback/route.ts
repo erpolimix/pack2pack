@@ -6,12 +6,14 @@ export async function GET(request: NextRequest) {
     const code = searchParams.get('code')
     // if "next" is in param, use it as the redirect URL
     const next = searchParams.get('next') ?? '/'
+    // Support for "redirect" param as well
+    const redirect = searchParams.get('redirect') ?? next
 
     if (code) {
         const cookieStore = request.cookies
 
         // Create response object early so we can pass it to supabase client
-        const response = NextResponse.redirect(`${origin}${next}`)
+        const response = NextResponse.redirect(`${origin}${redirect}`)
 
         const supabaseServer = createServerClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,

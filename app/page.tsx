@@ -3,11 +3,14 @@
 import { Button } from "@/components/ui/button"
 import { PackCard } from "@/components/pack-card"
 import { Footer } from "@/components/footer"
+import { LocationModal } from "@/components/location-modal"
 import { useEffect, useState } from "react"
 import type { Pack } from "@/services/packService"
 import { packService } from "@/services/packService"
 import { ratingService } from "@/services/ratingService"
-import { Search, MapPin, Leaf, CheckCircle2 } from "lucide-react"
+import { geoService, type Location } from "@/services/geoService"
+import { clearInvalidSession } from "@/lib/auth-helper"
+import { Search, MapPin, Leaf, CheckCircle2, ChevronDown } from "lucide-react"
 import Link from "next/link"
 
 export default function Home() {
@@ -15,14 +18,44 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState<string>('todo')
   const [sellerRatings, setSellerRatings] = useState<Record<string, { rating: number; count: number }>>({})
+  
+  // Estados de geolocalización
+  const [userLocation, setUserLocation] = useState<Location | null>(null)
+  const [showLocationModal, setShowLocationModal] = useState(false)
+  const [radiusKm, setRadiusKm] = useState<number>(50) // Radio por defecto 50km
 
   useEffect(() => {
-    loadPacks()
+    // Limpiar tokens inválidos al iniciar
+    clearInvalidSession().then(() => {
+      checkUserLocation()
+    })
   }, [])
+
+  useEffect(() => {
+    if (userLocation) {
+      loadPacksByProximity()
+    } else {
+      loadPacks()
+    }
+  }, [userLocation, radiusKm])
 
   useEffect(() => {
     loadPacksByCategory()
   }, [selectedCategory])
+
+  const checkUserLocation = () => {
+    const saved = geoService.getUserLocation()
+    if (saved) {
+      setUserLocation(saved)
+    } else {
+      setShowLocationModal(true)
+    }
+  }
+
+  const handleLocationSet = (location: Location) => {
+    setUserLocation(location)
+    setShowLocationModal(false)
+  }
 
   const loadPacks = async () => {
     try {
@@ -47,6 +80,40 @@ export default function Home() {
       setSellerRatings(ratingsObj)
     } catch (error) {
       console.error("Error cargando packs:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadPacksByProximity = async () => {
+    if (!userLocation) return
+
+    setLoading(true)
+    try {
+      const data = await packService.getPacksByProximity(
+        userLocation.coordinates,
+        radiusKm
+      )
+      setPacks(data)
+      
+      // Load ratings for all sellers
+      const ratingsObj: Record<string, { rating: number; count: number }> = {}
+      const uniqueSellers = new Set(data.map(p => p.seller_id))
+      
+      for (const sellerId of uniqueSellers) {
+        try {
+          const stats = await ratingService.getRatingsStats(sellerId)
+          ratingsObj[sellerId] = {
+            rating: stats.averageRating,
+            count: stats.totalRatings
+          }
+        } catch (error) {
+          console.error(`Error cargando stats para ${sellerId}:`, error)
+        }
+      }
+      setSellerRatings(ratingsObj)
+    } catch (error) {
+      console.error("Error cargando packs por proximidad:", error)
     } finally {
       setLoading(false)
     }
@@ -148,13 +215,49 @@ export default function Home() {
 
       {/* FILTERS & CONTENT */}
       <div className="sticky top-16 z-40 bg-brand-cream/95 backdrop-blur-sm border-b border-brand-primary/5 py-4 shadow-sm">
-        <div className="container mx-auto overflow-x-auto no-scrollbar px-6 sm:px-8">
-          <div className="flex space-x-3 md:space-x-4 min-w-max">
-            <Button 
-              onClick={() => setSelectedCategory('todo')}
-              variant={selectedCategory === 'todo' ? 'default' : 'outline'}
-              className={selectedCategory === 'todo' ? "rounded-full bg-brand-dark text-white hover:bg-brand-dark/90 font-bold text-sm shadow-md transition-transform transform active:scale-95 flex items-center gap-2 cursor-pointer" : "rounded-full bg-white border-gray-200 text-gray-600 font-semibold text-sm hover:border-brand-primary hover:text-brand-primary transition-colors hover:bg-white/50 flex items-center gap-2 cursor-pointer"}
-            >
+        <div className="container mx-auto px-6 sm:px-8">
+          {/* Ubicación y Radio */}
+          {userLocation && (
+            <div className="flex flex-wrap items-center gap-3 mb-4">
+              <div className="flex items-center gap-2 bg-white rounded-full px-4 py-2 border border-brand-primary/20">
+                <MapPin className="w-4 h-4 text-brand-primary" />
+                <span className="text-sm font-medium text-brand-dark">
+                  {userLocation.city}
+                </span>
+              </div>
+              
+              <div className="relative">
+                <select
+                  value={radiusKm}
+                  onChange={(e) => setRadiusKm(Number(e.target.value))}
+                  className="appearance-none bg-white rounded-full px-4 py-2 pr-10 border border-gray-200 text-sm font-medium text-gray-700 hover:border-brand-primary transition-colors cursor-pointer"
+                >
+                  <option value={5}>5 km</option>
+                  <option value={10}>10 km</option>
+                  <option value={25}>25 km</option>
+                  <option value={50}>50 km</option>
+                  <option value={100}>100 km</option>
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              </div>
+
+              <button
+                onClick={() => setShowLocationModal(true)}
+                className="text-sm text-brand-primary hover:text-brand-dark font-medium transition-colors"
+              >
+                Cambiar ubicación
+              </button>
+            </div>
+          )}
+
+          {/* Filtros de Categoría */}
+          <div className="overflow-x-auto no-scrollbar">
+            <div className="flex space-x-3 md:space-x-4 min-w-max">
+              <Button 
+                onClick={() => setSelectedCategory('todo')}
+                variant={selectedCategory === 'todo' ? 'default' : 'outline'}
+                className={selectedCategory === 'todo' ? "rounded-full bg-brand-dark text-white hover:bg-brand-dark/90 font-bold text-sm shadow-md transition-transform transform active:scale-95 flex items-center gap-2 cursor-pointer" : "rounded-full bg-white border-gray-200 text-gray-600 font-semibold text-sm hover:border-brand-primary hover:text-brand-primary transition-colors hover:bg-white/50 flex items-center gap-2 cursor-pointer"}
+              >
               <Leaf className="h-4 w-4" /> Todo
             </Button>
             <Button 
@@ -217,6 +320,7 @@ export default function Home() {
               </svg>
               Otros
             </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -283,6 +387,13 @@ export default function Home() {
       </main>
 
       <Footer />
+
+      {/* Location Modal */}
+      <LocationModal
+        isOpen={showLocationModal}
+        onClose={() => setShowLocationModal(false)}
+        onLocationSet={handleLocationSet}
+      />
     </div>
   )
 }
