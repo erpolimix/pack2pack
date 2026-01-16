@@ -24,8 +24,7 @@ export function Footer() {
                         <h4 className="font-bold text-lg mb-4">Descubre</h4>
                         <ul className="space-y-2 text-gray-400 text-sm">
                             <li><Link href="/how-it-works" className="hover:text-brand-accent transition-colors">Cómo funciona</Link></li>
-                            <li><Link href="#" className="hover:text-brand-accent transition-colors">Ciudades</Link></li>
-                            <li><Link href="#" className="hover:text-brand-accent transition-colors">Héroes del desperdicio</Link></li>
+                            <li><Link href="/heroes" className="hover:text-brand-accent transition-colors">Héroes del desperdicio</Link></li>
                             <li><Link href="#" className="hover:text-brand-accent transition-colors">Blog</Link></li>
                         </ul>
                     </div>
