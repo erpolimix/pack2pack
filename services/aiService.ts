@@ -98,7 +98,7 @@ Responde ÚNICAMENTE con el nombre de la categoría sin explicaciones adicionale
 
             const prompt = `Analiza esta imagen de un pack de productos y proporciona:
 
-1. Un TÍTULO corto (máx 30 caracteres) con gancho promocional y emoji. Ejemplos: "🔥 Pack ENERGY!", "🥗 FreshBowl PRO", "🍕 Pizza Night!", "💚 Pack ECO"
+1. Un TÍTULO corto (máx 30 caracteres) con gancho promocional profesional. Ejemplos: "Pack ENERGY Premium", "FreshBowl PRO", "Pizza Night Pack", "Pack ECO Saludable"
 2. Una DESCRIPCIÓN breve (máx 150 caracteres) indicando qué contiene en castellano.
 
 Responde en formato JSON exactamente así (sin markdown):

@@ -161,7 +161,7 @@ export default function HeroesPage() {
           <div className="flex flex-col md:flex-row justify-between items-end mb-16">
             <div>
               <h2 className="text-4xl md:text-5xl font-bold mb-4">Leyendas del Barrio</h2>
-              <p className="text-slate-400 text-lg max-w-md">Estos vecinos han movido más productos que nadie este mes. ¡Economía circular en estado puro! 👏</p>
+              <p className="text-slate-400 text-lg max-w-md">Estos vecinos han movido más productos que nadie este mes. ¡Economía circular en estado puro!</p>
             </div>
           </div>
 

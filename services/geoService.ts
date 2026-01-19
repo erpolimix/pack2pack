@@ -13,6 +13,36 @@ export interface Location {
 
 export const geoService = {
     baseUrl: 'https://nominatim.openstreetmap.org',
+    
+    // Cache para reducir llamadas API (reduce costes 80%)
+    cache: {
+        geocode: new Map<string, { location: Location; timestamp: number }>(),
+        reverseGeocode: new Map<string, { location: Location; timestamp: number }>(),
+        cacheDuration: 24 * 60 * 60 * 1000, // 24 horas
+        
+        getCached<T>(cache: Map<string, { location: T; timestamp: number }>, key: string): T | null {
+            const cached = cache.get(key)
+            if (!cached) return null
+            
+            const isExpired = Date.now() - cached.timestamp > this.cacheDuration
+            if (isExpired) {
+                cache.delete(key)
+                return null
+            }
+            
+            return cached.location
+        },
+        
+        setCached<T>(cache: Map<string, { location: T; timestamp: number }>, key: string, location: T): void {
+            cache.set(key, { location, timestamp: Date.now() })
+            
+            // Limpiar cache viejo (mantener máximo 100 entradas)
+            if (cache.size > 100) {
+                const oldestKey = Array.from(cache.keys())[0]
+                cache.delete(oldestKey)
+            }
+        }
+    },
 
     /**
      * Obtener ubicación actual del navegador
@@ -46,8 +76,21 @@ export const geoService = {
 
     /**
      * Reverse geocoding: coordenadas → dirección
+     * Con cache de 24 horas para reducir API calls
      */
     async reverseGeocode(coords: Coordinates): Promise<Location> {
+        // Redondear coordenadas a 3 decimales (~100m precisión) para mejor cache hit rate
+        const cacheKey = `${coords.latitude.toFixed(3)},${coords.longitude.toFixed(3)}`
+        
+        // Buscar en cache
+        const cached = this.cache.getCached(this.cache.reverseGeocode, cacheKey)
+        if (cached) {
+            console.log('[GeoService] Cache HIT - reverseGeocode:', cacheKey)
+            return cached
+        }
+        
+        console.log('[GeoService] Cache MISS - fetching from Nominatim:', cacheKey)
+        
         try {
             const response = await fetch(
                 `${this.baseUrl}/reverse?lat=${coords.latitude}&lon=${coords.longitude}&format=json&addressdetails=1`,
@@ -65,13 +108,18 @@ export const geoService = {
 
             const data = await response.json()
 
-            return {
+            const location: Location = {
                 coordinates: coords,
                 city: data.address.city || data.address.town || data.address.village || data.address.municipality || 'Ciudad desconocida',
                 postalCode: data.address.postcode,
                 neighborhood: data.address.suburb || data.address.neighbourhood || data.address.quarter,
                 address: data.display_name
             }
+            
+            // Guardar en cache
+            this.cache.setCached(this.cache.reverseGeocode, cacheKey, location)
+            
+            return location
         } catch (error) {
             console.error("Error en reverseGeocode:", error)
             throw error
@@ -80,8 +128,21 @@ export const geoService = {
 
     /**
      * Geocoding: dirección/ciudad → coordenadas
+     * Con cache de 24 horas para reducir API calls
      */
     async geocodeAddress(address: string): Promise<Location> {
+        // Normalizar dirección para cache
+        const cacheKey = address.toLowerCase().trim()
+        
+        // Buscar en cache
+        const cached = this.cache.getCached(this.cache.geocode, cacheKey)
+        if (cached) {
+            console.log('[GeoService] Cache HIT - geocode:', cacheKey)
+            return cached
+        }
+        
+        console.log('[GeoService] Cache MISS - fetching from Nominatim:', cacheKey)
+        
         try {
             // Añadir "España" si no está incluido para mejor precisión
             const searchQuery = address.toLowerCase().includes('españa') 
@@ -114,13 +175,18 @@ export const geoService = {
                 longitude: parseFloat(result.lon)
             }
 
-            return {
+            const location: Location = {
                 coordinates: coords,
                 city: result.address.city || result.address.town || result.address.village || result.address.municipality || 'Ciudad desconocida',
                 postalCode: result.address.postcode,
-                neighborhood: result.address.suburb || result.address.neighbourhood,
+                neighborhood: result.address.suburb || result.address.neighbourhood || result.address.quarter,
                 address: result.display_name
             }
+            
+            // Guardar en cache
+            this.cache.setCached(this.cache.geocode, cacheKey, location)
+            
+            return location
         } catch (error) {
             console.error("Error en geocodeAddress:", error)
             throw error

@@ -6,6 +6,7 @@ import { packService, type Pack } from "@/services/packService"
 import { bookingService } from "@/services/bookingService"
 import { ratingService, type UserRatingsStats } from "@/services/ratingService"
 import { authService } from "@/services/authService"
+import { exchangeService } from "@/services/exchangeService"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -15,6 +16,7 @@ import { Toast } from "@/components/ui/toast"
 import { useToast } from "@/lib/useToast"
 import { ArrowLeft, MapPin, Share2, Shield, User, Calendar, Clock, Star } from "lucide-react"
 import { RatingsDisplay } from "@/components/ratings-display"
+import { ExchangeProposalModal } from "@/components/exchange-proposal-modal"
 import Link from "next/link"
 import { Skeleton } from "@/components/ui/skeleton"
 import { User as UserType } from "@supabase/supabase-js"
@@ -48,7 +50,9 @@ export default function PackDetailPage() {
     const [pack, setPack] = useState<Pack | undefined>(undefined)
     const [loading, setLoading] = useState(true)
     const [currentUser, setCurrentUser] = useState<UserType | null>(null)
+    const [userPacks, setUserPacks] = useState<Pack[]>([])
     const [showBookingModal, setShowBookingModal] = useState(false)
+    const [showExchangeModal, setShowExchangeModal] = useState(false)
     const [bookingInProgress, setBookingInProgress] = useState(false)
     const [hasActiveBooking, setHasActiveBooking] = useState(false)
     const [isPackBooked, setIsPackBooked] = useState(false)
@@ -70,6 +74,12 @@ export default function PackDetailPage() {
                     ])
                     setPack(foundPack)
                     setCurrentUser(user)
+                    
+                    // Load user's packs for exchange modal
+                    if (user) {
+                        const userPacksList = await packService.getPacksByUser(user.id)
+                        setUserPacks(userPacksList)
+                    }
                     
                     // Load seller ratings
                     if (foundPack) {
@@ -116,6 +126,27 @@ export default function PackDetailPage() {
             return
         }
         setShowBookingModal(true)
+    }
+
+    const handleExchangeClick = () => {
+        if (!currentUser) {
+            router.push('/login')
+            return
+        }
+        if (isOwner) {
+            showError("No puedes intercambiar tu propio pack")
+            return
+        }
+        if (userPacks.length === 0) {
+            showError("Necesitas crear un pack primero para poder intercambiar")
+            router.push('/create')
+            return
+        }
+        if (!userPacks.some(p => p.status === 'available')) {
+            showError("Necesitas tener al menos un pack disponible para intercambiar")
+            return
+        }
+        setShowExchangeModal(true)
     }
 
     const handleBookingSubmit = async (e: React.FormEvent) => {
@@ -205,7 +236,7 @@ export default function PackDetailPage() {
                         </div>
                     </div>
 
-                    <div className="bg-muted/30 p-4 rounded-lg border flex justify-between items-center">
+                    <div className="bg-muted/30 p-4 rounded-lg border flex flex-col gap-3">
                         <div>
                             <p className="text-xs text-muted-foreground uppercase font-semibold">Precio</p>
                             <div className="flex items-baseline gap-2">
@@ -213,14 +244,26 @@ export default function PackDetailPage() {
                                 <span className="text-sm text-muted-foreground line-through">{pack.originalPrice.toFixed(2)}€</span>
                             </div>
                         </div>
-                        <Button
-                            size="lg"
-                            className="px-8 shadow-lg shadow-primary/20"
-                            disabled={isOwner || hasActiveBooking || isPackBooked}
-                            onClick={handleReserveClick}
-                        >
-                            {isOwner ? "Es tu propio pack" : (hasActiveBooking || isPackBooked) ? "Ya reservado" : "Reservar ahora"}
-                        </Button>
+                        <div className="flex flex-col gap-2">
+                            <Button
+                                size="lg"
+                                className="w-full bg-gradient-to-r from-brand-primary to-brand-dark hover:from-brand-dark hover:to-brand-primary text-white font-semibold rounded-xl transition-all duration-300 shadow-md hover:shadow-xl"
+                                disabled={isOwner || hasActiveBooking || isPackBooked}
+                                onClick={handleReserveClick}
+                            >
+                                {isOwner ? "Es tu propio pack" : (hasActiveBooking || isPackBooked) ? "Ya reservado" : "Reservar ahora"}
+                            </Button>
+                            {!isOwner && pack.status === 'available' && !hasActiveBooking && !isPackBooked && userPacks.length > 0 && (
+                                <Button
+                                    variant="outline"
+                                    size="lg"
+                                    className="w-full border-2 border-gray-300 text-gray-700 hover:border-brand-primary hover:bg-brand-primary/5 hover:text-brand-primary font-medium rounded-xl transition-all duration-300"
+                                    onClick={handleExchangeClick}
+                                >
+                                    Proponer intercambio
+                                </Button>
+                            )}
+                        </div>
                     </div>
 
                     <div className="space-y-4">
@@ -403,6 +446,21 @@ export default function PackDetailPage() {
                         </form>
                     </div>
                 </div>
+            )}
+
+            {showExchangeModal && pack && (
+                <ExchangeProposalModal
+                    packRequested={pack}
+                    userPacks={userPacks.filter(p => p.status === 'available')}
+                    onClose={() => setShowExchangeModal(false)}
+                    onSuccess={() => {
+                        setShowExchangeModal(false)
+                        showSuccess("¡Propuesta enviada! Revisa tu estado en 'Mis Intercambios'")
+                        setTimeout(() => {
+                            router.push('/my-exchanges')
+                        }, 2000)
+                    }}
+                />
             )}
 
             <Toast

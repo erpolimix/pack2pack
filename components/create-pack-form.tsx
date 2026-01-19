@@ -6,6 +6,7 @@ import { aiService } from "@/services/aiService"
 import { packService } from "@/services/packService"
 import { geoService, type Location } from "@/services/geoService"
 import { supabase } from "@/lib/supabase"
+import { imageOptimizer } from "@/lib/image-optimizer"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -126,29 +127,40 @@ export function CreatePackForm() {
         const file = e.target.files?.[0]
         if (!file) return
 
-        setSelectedFile(file)
-        // Create preview
-        const reader = new FileReader()
-        reader.onloadend = () => {
-            setImagePreview(reader.result as string)
+        // Validar imagen
+        const validation = imageOptimizer.validateImage(file, 5)
+        if (!validation.valid) {
+            alert(validation.error)
+            return
         }
-        reader.readAsDataURL(file)
 
-        // Auto-analyze with AI
+        // Comprimir imagen ANTES de procesar
         setIsAnalyzing(true)
         try {
-            const aiSuggestion = await aiService.generateTitleAndDescription(file)
+            const compressedFile = await imageOptimizer.compressImage(file, 1200, 0.85)
+            setSelectedFile(compressedFile)
+            
+            // Create preview
+            const reader = new FileReader()
+            reader.onloadend = () => {
+                setImagePreview(reader.result as string)
+            }
+            reader.readAsDataURL(compressedFile)
+
+            // Auto-analyze with AI (usa archivo comprimido)
+            const aiSuggestion = await aiService.generateTitleAndDescription(compressedFile)
             if (aiSuggestion.title && !aiSuggestion.title.startsWith("No se ha podido")) {
                 setTitle(aiSuggestion.title)
             }
             if (aiSuggestion.description && !aiSuggestion.description.startsWith("No se ha podido")) {
                 setDescription(aiSuggestion.description)
                 // Detectar categoría automáticamente basada en la descripción
-                const detectedCategory = await aiService.detectCategory(file, aiSuggestion.description)
+                const detectedCategory = await aiService.detectCategory(compressedFile, aiSuggestion.description)
                 setCategory(detectedCategory)
             }
         } catch (error) {
-            console.error("AI Error", error)
+            console.error("Error procesando imagen:", error)
+            alert("Error al procesar la imagen. Intenta con otra.")
         } finally {
             setIsAnalyzing(false)
         }
@@ -427,7 +439,7 @@ export function CreatePackForm() {
                     )}
                     
                     {selectedSlots.length === 0 && (
-                        <p className="text-xs text-red-600">⚠️ Selecciona al menos una franja horaria</p>
+                        <p className="text-xs text-red-600">Selecciona al menos una franja horaria</p>
                     )}
                 </div>
 

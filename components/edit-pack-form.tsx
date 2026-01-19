@@ -366,7 +366,7 @@ export function EditPackForm({ pack, onSuccess }: EditPackFormProps) {
                     )}
                     
                     {selectedSlots.length === 0 && (
-                        <p className="text-xs text-red-600">⚠️ Selecciona al menos una franja horaria</p>
+                        <p className="text-xs text-red-600">Selecciona al menos una franja horaria</p>
                     )}
                 </div>
 

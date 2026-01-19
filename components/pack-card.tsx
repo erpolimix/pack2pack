@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Image from "next/image"
 import { Clock, Star, MapPin } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -35,16 +36,20 @@ export function PackCard({ pack, sellerRating, sellerRatingCount }: PackCardProp
     return (
         <Card className="pack-card group border-0 shadow-md hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden bg-white flex flex-col h-full relative">
             {/* Image Section */}
-            <div className="relative h-48 overflow-hidden">
-                <img
+            <div className="relative h-48 overflow-hidden bg-gray-100">
+                <Image
                     src={pack.imageUrl}
                     alt={pack.title}
-                    className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    className="object-cover transform group-hover:scale-110 transition-transform duration-500"
+                    loading="lazy"
+                    quality={85}
                 />
 
                 {/* Badge de distancia */}
                 {distanceText && (
-                    <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg text-xs font-bold text-brand-primary flex items-center gap-1">
+                    <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg text-xs font-bold text-brand-primary flex items-center gap-1 z-10">
                         <MapPin size={12} />
                         {distanceText}
                     </div>

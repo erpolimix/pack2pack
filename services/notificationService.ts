@@ -8,6 +8,11 @@ export type NotificationType =
     | 'booking_cancelled'
     | 'rating_received'
     | 'pack_sold'
+    | 'exchange_proposed'
+    | 'exchange_accepted'
+    | 'exchange_rejected'
+    | 'exchange_completed'
+    | 'exchange_cancelled'
 
 export interface Notification {
     id: string
@@ -144,7 +149,7 @@ export const notificationService = {
         await this.createNotification(
             sellerId,
             'booking_created',
-            '🛒 Nueva reserva recibida',
+            'Nueva reserva recibida',
             `Tienes una nueva reserva para "${packTitle}". ¡Revisa los detalles!`,
             '/my-sales',
             { bookingId }
@@ -158,7 +163,7 @@ export const notificationService = {
         await this.createNotification(
             buyerId,
             'booking_validated_seller',
-            '✅ Entrega confirmada',
+            'Entrega confirmada',
             `El vendedor ha validado la entrega de "${packTitle}". ¡Confirma que lo recibiste!`,
             '/my-purchases',
             { bookingId }
@@ -172,7 +177,7 @@ export const notificationService = {
         await this.createNotification(
             sellerId,
             'booking_validated_buyer',
-            '✅ Comprador confirmó recepción',
+            'Comprador confirmó recepción',
             `El comprador ha confirmado la recepción de "${packTitle}". ¡Transacción completada!`,
             '/my-sales',
             { bookingId }
@@ -192,7 +197,7 @@ export const notificationService = {
             this.createNotification(
                 buyerId,
                 'booking_completed',
-                '🎉 Transacción completada',
+                'Transacción completada',
                 `Tu compra de "${packTitle}" se ha completado. ¡No olvides valorar al vendedor!`,
                 '/my-purchases',
                 { bookingId }
@@ -200,7 +205,7 @@ export const notificationService = {
             this.createNotification(
                 sellerId,
                 'booking_completed',
-                '🎉 Venta completada',
+                'Venta completada',
                 `Tu venta de "${packTitle}" se ha completado. ¡No olvides valorar al comprador!`,
                 '/my-sales',
                 { bookingId }
@@ -235,7 +240,7 @@ export const notificationService = {
         await this.createNotification(
             buyerId,
             'booking_cancelled',
-            '❌ Reserva cancelada',
+            'Reserva cancelada',
             `Tu reserva de "${packTitle}" ha sido cancelada.`,
             '/my-purchases',
             {}

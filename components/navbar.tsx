@@ -119,6 +119,9 @@ export function Navbar() {
                                 <DropdownMenuItem asChild className="focus:bg-brand-light focus:text-brand-primary cursor-pointer rounded-lg">
                                     <Link href="/my-sales">Mis Ventas</Link>
                                 </DropdownMenuItem>
+                                <DropdownMenuItem asChild className="focus:bg-brand-light focus:text-brand-primary cursor-pointer rounded-lg">
+                                    <Link href="/my-exchanges">Mis Intercambios</Link>
+                                </DropdownMenuItem>
                                 <DropdownMenuSeparator className="bg-brand-primary/10" />
                                 <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:bg-destructive/10 focus:text-destructive cursor-pointer rounded-lg">
                                     <LogOut className="mr-2 h-4 w-4" />
