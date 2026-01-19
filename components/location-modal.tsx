@@ -20,7 +20,36 @@ export function LocationModal({ isOpen, onClose, onLocationSet }: LocationModalP
     const handleUseCurrentLocation = async () => {
         setLoading(true)
         setError("")
+        
         try {
+            // Paso 1: Verificar si la API está disponible
+            if (!navigator.geolocation) {
+                throw new Error("Tu navegador no soporta geolocalización. Por favor, introduce tu ciudad manualmente.")
+            }
+
+            // Paso 2: Verificar permisos ANTES de intentar (si está disponible en el navegador)
+            if (navigator.permissions) {
+                try {
+                    const permissionStatus = await navigator.permissions.query({ name: 'geolocation' as PermissionName })
+                    
+                    if (permissionStatus.state === 'denied') {
+                        throw new Error(
+                            "⚠️ PERMISO DENEGADO\n\n" +
+                            "Para habilitar la ubicación en iOS:\n\n" +
+                            "1. Ve a Ajustes de iOS\n" +
+                            "2. Busca Safari (o Chrome)\n" +
+                            "3. Toca 'Ubicación'\n" +
+                            "4. Selecciona 'Permitir'\n\n" +
+                            "O introduce tu ciudad manualmente abajo 👇"
+                        )
+                    }
+                } catch (permCheckError) {
+                    // Si no se puede verificar permisos, continuar con el intento
+                    console.log("No se pudo verificar permisos, intentando geolocalización de todos modos")
+                }
+            }
+
+            // Paso 3: Intentar obtener ubicación
             const coords = await geoService.getCurrentPosition()
             const location = await geoService.reverseGeocode(coords)
             geoService.saveUserLocation(location)
@@ -32,16 +61,15 @@ export function LocationModal({ isOpen, onClose, onLocationSet }: LocationModalP
             // Mostrar el mensaje de error detallado al usuario
             const errorMessage = err instanceof Error ? err.message : String(err)
             
-            // Si el error incluye diagnóstico, mostrarlo (útil para debug)
+            // Si el error incluye diagnóstico detallado
             if (errorMessage.includes('[GEO]')) {
-                // Extraer solo la parte legible para el usuario
                 const userMessage = errorMessage.split('\n\n')[0]
                 const diagnostic = errorMessage.split('\n\n')[1] || ''
                 
                 console.log('=== DIAGNÓSTICO DETALLADO ===\n' + diagnostic)
-                setError(userMessage || "No pudimos obtener tu ubicación. Por favor, introdúcela manualmente.")
+                setError(userMessage)
             } else {
-                setError(errorMessage || "No pudimos obtener tu ubicación. Por favor, introdúcela manualmente.")
+                setError(errorMessage)
             }
         } finally {
             setLoading(false)
