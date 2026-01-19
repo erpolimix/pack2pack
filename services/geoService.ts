@@ -46,6 +46,7 @@ export const geoService = {
 
     /**
      * Obtener ubicación actual del navegador
+     * Implementación optimizada para iOS (Safari/Chrome)
      */
     async getCurrentPosition(): Promise<Coordinates> {
         return new Promise((resolve, reject) => {
@@ -54,23 +55,65 @@ export const geoService = {
                 return
             }
 
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    resolve({
-                        latitude: position.coords.latitude,
-                        longitude: position.coords.longitude
-                    })
-                },
-                (error) => {
-                    console.error("Error obteniendo ubicación:", error)
-                    reject(error)
-                },
-                {
-                    enableHighAccuracy: true,
-                    timeout: 10000,
-                    maximumAge: 0
-                }
-            )
+            // Estrategia de doble intento para iOS:
+            // 1. Primero con alta precisión (puede fallar en iOS)
+            // 2. Si falla, reintentar con baja precisión (más tolerante)
+            
+            const tryHighAccuracy = () => {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        resolve({
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude
+                        })
+                    },
+                    (error) => {
+                        console.warn("Alta precisión falló, reintentando con baja precisión...", error)
+                        tryLowAccuracy()
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 15000,
+                        maximumAge: 300000  // 5 minutos cache (iOS necesita esto)
+                    }
+                )
+            }
+
+            const tryLowAccuracy = () => {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        resolve({
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude
+                        })
+                    },
+                    (error) => {
+                        console.error("Error obteniendo ubicación (ambos intentos):", error)
+                        // Mensaje de error más descriptivo según código
+                        let errorMessage = "Error obteniendo ubicación"
+                        switch (error.code) {
+                            case error.PERMISSION_DENIED:
+                                errorMessage = "Permiso denegado. Por favor, habilita el acceso a ubicación en la configuración de tu navegador."
+                                break
+                            case error.POSITION_UNAVAILABLE:
+                                errorMessage = "Ubicación no disponible. Verifica tu conexión GPS/WiFi."
+                                break
+                            case error.TIMEOUT:
+                                errorMessage = "Tiempo agotado. Por favor, intenta de nuevo."
+                                break
+                        }
+                        reject(new Error(errorMessage))
+                    },
+                    {
+                        enableHighAccuracy: false,
+                        timeout: 20000,
+                        maximumAge: 600000  // 10 minutos cache (muy tolerante)
+                    }
+                )
+            }
+
+            // Iniciar con alta precisión
+            tryHighAccuracy()
         })
     },
 
