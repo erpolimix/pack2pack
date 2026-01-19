@@ -30,6 +30,7 @@ export function EditPackForm({ pack, onSuccess }: EditPackFormProps) {
     const [originalPrice, setOriginalPrice] = useState(pack.originalPrice?.toString() || "")
     const [tagInput, setTagInput] = useState(pack.tags?.join(", ") || "")
     const [pickupLocation, setPickupLocation] = useState(pack.pickupLocation || pack.location || "")
+    const [isFree, setIsFree] = useState(pack.isFree)
 
     // Time windows with visual picker
     type TimeSlot = { day: string; time: string; label: string }
@@ -146,12 +147,13 @@ export function EditPackForm({ pack, onSuccess }: EditPackFormProps) {
             await packService.updatePack(pack.id, {
                 title,
                 description,
-                price: Number.parseFloat(price) || 0,
+                price: isFree ? 0 : (Number.parseFloat(price) || 0),
                 originalPrice: Number.parseFloat(originalPrice) || 0,
                 imageUrl: finalImageUrl,
                 tags: tagInput.split(',').map(t => t.trim()).filter(Boolean),
                 pickupLocation: pickupLocation || pack.location,
                 pickupWindows: selectedSlots.map(s => s.label),
+                isFree: isFree,
             })
 
             if (onSuccess) {
@@ -218,6 +220,20 @@ export function EditPackForm({ pack, onSuccess }: EditPackFormProps) {
             </div>
 
             <div className="space-y-4">
+                {/* Free toggle */}
+                <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl border border-emerald-200">
+                    <input
+                        type="checkbox"
+                        id="is-free-edit"
+                        checked={isFree}
+                        onChange={e => setIsFree(e.target.checked)}
+                        className="w-5 h-5 rounded cursor-pointer accent-emerald-600"
+                    />
+                    <Label htmlFor="is-free-edit" className="cursor-pointer flex-1 font-semibold text-emerald-700">
+                        ¡Este pack es GRATIS! 🎁
+                    </Label>
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label>Precio (€)</Label>
@@ -225,9 +241,10 @@ export function EditPackForm({ pack, onSuccess }: EditPackFormProps) {
                             type="number"
                             step="0.50"
                             placeholder="5.00"
-                            value={price}
+                            value={isFree ? "0" : price}
                             onChange={e => setPrice(e.target.value)}
-                            required
+                            disabled={isFree}
+                            className={isFree ? "opacity-50 cursor-not-allowed" : ""}
                         />
                     </div>
                     <div className="space-y-2">

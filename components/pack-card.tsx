@@ -1,6 +1,6 @@
 import Link from "next/link"
 import Image from "next/image"
-import { Clock, Star, MapPin } from "lucide-react"
+import { Clock, Star, MapPin, Gift } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { geoService } from "@/services/geoService"
@@ -12,29 +12,39 @@ interface PackCardProps {
     sellerRatingCount?: number
 }
 
-export function PackCard({ pack, sellerRating, sellerRatingCount }: PackCardProps) {
+export function PackCard({ pack, sellerRating, sellerRatingCount }: readonly PackCardProps) {
     const averageRating = sellerRating || 0
     const ratingCount = sellerRatingCount || 0
     
     // Calcular tiempo restante
-    const now = new Date().getTime()
+    const now = Date.now()
     const expiresTime = new Date(pack.expiresAt).getTime()
     const timeRemaining = expiresTime - now
     
     const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24))
     const hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
     
-    const timeText = days > 0 
-        ? `Faltan ${days}d ${hours}h`
-        : hours > 0 
-        ? `Faltan ${hours}h`
-        : 'Expirando pronto'
+    let timeText: string
+    if (days > 0) {
+        timeText = `Faltan ${days}d ${hours}h`
+    } else if (hours > 0) {
+        timeText = `Faltan ${hours}h`
+    } else {
+        timeText = 'Expirando pronto'
+    }
     
     // Formatear distancia si está disponible
     const distanceText = pack.distanceKm ? geoService.formatDistance(pack.distanceKm) : null
     
+    // Estilo especial para packs gratis
+    const isFree = pack.isFree
+    
     return (
-        <Card className="pack-card group border-0 shadow-md hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden bg-white flex flex-col h-full relative">
+        <Card className={`pack-card group border-0 shadow-md hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden flex flex-col h-full relative ${
+            isFree 
+                ? 'bg-gradient-to-br from-emerald-50 via-white to-teal-50 ring-2 ring-emerald-400/50' 
+                : 'bg-white'
+        }`}>
             {/* Image Section */}
             <div className="relative h-48 overflow-hidden bg-gray-100">
                 <Image
@@ -47,16 +57,32 @@ export function PackCard({ pack, sellerRating, sellerRatingCount }: PackCardProp
                     quality={85}
                 />
 
+                {/* Badge GRATIS - Llamativo */}
+                {isFree && (
+                    <div className="absolute top-3 right-3 z-20 animate-pulse">
+                        <div className="bg-gradient-to-r from-emerald-400 to-teal-400 text-white px-4 py-2 rounded-full font-bold text-sm flex items-center gap-2 shadow-lg drop-shadow-lg">
+                            <Gift className="h-5 w-5" />
+                            GRATIS
+                        </div>
+                    </div>
+                )}
+
                 {/* Badge de distancia */}
                 {distanceText && (
-                    <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg text-xs font-bold text-brand-primary flex items-center gap-1 z-10">
+                    <div className={`absolute top-3 left-3 backdrop-blur-sm px-2 py-1 rounded-lg text-xs font-bold flex items-center gap-1 z-10 ${
+                        isFree ? 'bg-emerald-100/90 text-emerald-700' : 'bg-white/90 text-brand-primary'
+                    }`}>
                         <MapPin size={12} />
                         {distanceText}
                     </div>
                 )}
 
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
-                    <span className="text-white text-xs font-bold bg-black/30 backdrop-blur-md px-2 py-1 rounded-lg border border-white/20 flex items-center w-fit">
+                    <span className={`text-xs font-bold px-2 py-1 rounded-lg border flex items-center w-fit ${
+                        isFree
+                            ? 'bg-emerald-500/30 border-emerald-300 text-white'
+                            : 'bg-black/30 border-white/20 text-white'
+                    } backdrop-blur-md`}>
                         <Clock className="mr-1 h-3 w-3" /> {timeText}
                     </span>
                 </div>
@@ -109,10 +135,23 @@ export function PackCard({ pack, sellerRating, sellerRatingCount }: PackCardProp
 
                 <div className="mt-auto flex justify-between items-end">
                     <div>
-                        <span className="text-gray-400 text-sm line-through block">{pack.originalPrice}€</span>
-                        <span className="text-brand-accent text-2xl font-extrabold">{pack.price}€</span>
+                        {isFree ? (
+                            <div className="flex flex-col items-start gap-1">
+                                <span className="text-gray-400 text-sm line-through">{pack.originalPrice}€</span>
+                                <span className="text-emerald-600 text-2xl font-extrabold">¡GRATIS!</span>
+                            </div>
+                        ) : (
+                            <div>
+                                <span className="text-gray-400 text-sm line-through block">{pack.originalPrice}€</span>
+                                <span className="text-brand-accent text-2xl font-extrabold">{pack.price}€</span>
+                            </div>
+                        )}
                     </div>
-                    <Button asChild className="bg-brand-light text-brand-primary hover:bg-brand-primary hover:text-white font-bold rounded-xl text-sm transition-colors shadow-none hover:shadow-md">
+                    <Button asChild className={`font-bold rounded-xl text-sm transition-colors shadow-none hover:shadow-md ${
+                        isFree
+                            ? 'bg-emerald-500 text-white hover:bg-emerald-600'
+                            : 'bg-brand-light text-brand-primary hover:bg-brand-primary hover:text-white'
+                    }`}>
                         <Link href={`/packs/${pack.id}`}>
                             Ver Pack
                         </Link>

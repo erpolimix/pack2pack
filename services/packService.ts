@@ -17,6 +17,7 @@ export interface Pack {
     pickupLocation?: string;
     pickupWindows?: string[];
     status: 'available' | 'reserved' | 'sold' | 'expired' | 'archived';
+    isFree: boolean; // Indicador si el pack es gratuito
     // Geolocalización
     latitude?: number;
     longitude?: number;
@@ -41,7 +42,6 @@ export const packService = {
 
         if (!packs || packs.length === 0) return []
 
-        console.log(`[packService] Total packs disponibles: ${packs.length}`)
 
         // Get all active bookings (pending or confirmed)
         const { data: activeBookings, error: bookingsError } = await supabase
@@ -81,6 +81,7 @@ export const packService = {
             pickupLocation: p.pickup_location,
             pickupWindows: p.pickup_windows || [],
             status: p.status || 'available',
+            isFree: (p as any).is_free === true, // Asegurar que solo true sea true
             // Campos de geolocalización
             latitude: p.latitude,
             longitude: p.longitude,
@@ -118,6 +119,7 @@ export const packService = {
             pickupLocation: data.pickup_location,
             pickupWindows: data.pickup_windows || [],
             status: data.status || 'available',
+            isFree: (data as any).is_free === true, // Asegurar que solo true sea true
             // Campos de geolocalización
             latitude: data.latitude,
             longitude: data.longitude,
@@ -145,6 +147,7 @@ export const packService = {
                 distance: pack.distance,
                 pickup_location: pack.pickupLocation,
                 pickup_windows: pack.pickupWindows || [],
+                is_free: pack.isFree || false, // Guardar si es gratuito
                 // Guardar geolocalización
                 latitude: pack.latitude,
                 longitude: pack.longitude,
@@ -155,7 +158,7 @@ export const packService = {
                 expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
                 created_at: new Date().toISOString()
             })
-            .select()
+            .select('*, is_free')
             .single()
 
         if (error) throw error
@@ -268,6 +271,7 @@ export const packService = {
                 location: pack.location,
                 pickup_location: pack.pickupLocation,
                 pickup_windows: pack.pickupWindows,
+                is_free: pack.isFree,
             })
             .eq('id', packId)
 
@@ -392,6 +396,7 @@ export const packService = {
             pickupLocation: p.pickup_location,
             pickupWindows: p.pickup_windows || [],
             status: p.status || 'available',
+            isFree: (p as any).is_free === true, // Asegurar que solo true sea true
         }))
     },
 
@@ -453,6 +458,7 @@ export const packService = {
                     pickupLocation: p.pickup_location,
                     pickupWindows: p.pickup_windows || [],
                     status: p.status || 'available',
+                    isFree: (p as any).is_free === true, // Asegurar que solo true sea true
                     latitude: p.latitude,
                     longitude: p.longitude,
                     city: p.city,

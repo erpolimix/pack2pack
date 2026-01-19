@@ -10,13 +10,14 @@ import { packService } from "@/services/packService"
 import { ratingService } from "@/services/ratingService"
 import { geoService, type Location } from "@/services/geoService"
 import { clearInvalidSession } from "@/lib/auth-helper"
-import { Search, MapPin, Leaf, CheckCircle2, ChevronDown } from "lucide-react"
+import { Search, MapPin, Leaf, CheckCircle2, ChevronDown, Gift } from "lucide-react"
 import Link from "next/link"
 
 export default function Home() {
   const [packs, setPacks] = useState<Pack[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState<string>('todo')
+  const [showOnlyFree, setShowOnlyFree] = useState(false) // Nuevo: filtro de packs gratis
   const [sellerRatings, setSellerRatings] = useState<Record<string, { rating: number; count: number }>>({})
   
   // Estados de geolocalización
@@ -320,6 +321,18 @@ export default function Home() {
               </svg>
               Otros
             </Button>
+
+            {/* Filtro Gratis - Separador visual */}
+            <div className="hidden md:block border-l border-gray-200 mx-2"></div>
+
+            {/* Botón Gratis con diseño destacado */}
+            <Button 
+              onClick={() => setShowOnlyFree(!showOnlyFree)}
+              variant={showOnlyFree ? 'default' : 'outline'}
+              className={showOnlyFree ? "rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-600 hover:to-teal-600 font-bold text-sm shadow-lg shadow-emerald-500/50 transition-all transform active:scale-95 flex items-center gap-2 cursor-pointer ring-2 ring-emerald-300" : "rounded-full bg-white border-2 border-emerald-300 text-emerald-600 font-bold text-sm hover:border-emerald-500 hover:bg-emerald-50 transition-all hover:shadow-md flex items-center gap-2 cursor-pointer"}
+            >
+              <Gift className="h-5 w-5" /> ¡GRATIS!
+            </Button>
             </div>
           </div>
         </div>
@@ -344,19 +357,51 @@ export default function Home() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {packs.map((pack) => {
-              const ratingData = sellerRatings[pack.seller_id]
-              return (
-                <PackCard 
-                  key={pack.id} 
-                  pack={pack}
-                  sellerRating={ratingData?.rating}
-                  sellerRatingCount={ratingData?.count}
-                />
-              )
-            })}
-          </div>
+          <>
+            {/* Mostrar mensaje si solo se muestran packs gratis */}
+            {showOnlyFree && packs.some(p => p.isFree) && (
+              <div className="mb-6 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 border-l-4 border-emerald-500 rounded-lg">
+                <p className="text-emerald-700 font-semibold flex items-center gap-2">
+                  <Gift className="h-5 w-5" />
+                  {(() => {
+                    const freeCount = packs.filter(p => p.isFree).length
+                    return `${freeCount} pack${freeCount === 1 ? '' : 's'} GRATIS disponible${freeCount === 1 ? '' : 's'}`
+                  })()}
+                </p>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {packs
+                .filter(pack => !showOnlyFree || pack.isFree) // Aplicar filtro de gratis
+                .map((pack) => {
+                  const ratingData = sellerRatings[pack.seller_id]
+                  return (
+                    <PackCard 
+                      key={pack.id} 
+                      pack={pack}
+                      sellerRating={ratingData?.rating}
+                      sellerRatingCount={ratingData?.count}
+                    />
+                  )
+                })}
+            </div>
+
+            {/* Mensaje si no hay resultados */}
+            {showOnlyFree && !packs.some(p => p.isFree) && (
+              <div className="text-center py-12">
+                <Gift className="h-16 w-16 text-emerald-300 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-gray-700 mb-2">No hay packs gratis disponibles</h3>
+                <p className="text-gray-500 mb-6">Revisa más tarde o explora otros packs especiales</p>
+                <Button 
+                  onClick={() => setShowOnlyFree(false)}
+                  className="bg-brand-primary text-white hover:bg-brand-dark rounded-xl font-bold px-6 py-2 transition-colors"
+                >
+                  Ver todos los packs
+                </Button>
+              </div>
+            )}
+          </>
         )}
 
         {/* VALUE PROPS */}
