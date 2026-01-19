@@ -78,10 +78,11 @@ export const packService = {
             distance: p.distance,
             expiresAt: p.expires_at,
             tags: p.tags || [],
+            category: p.category || 'Sin categoría',
             pickupLocation: p.pickup_location,
             pickupWindows: p.pickup_windows || [],
             status: p.status || 'available',
-            isFree: (p as any).is_free === true, // Asegurar que solo true sea true
+            isFree: p.is_free === true,
             // Campos de geolocalización
             latitude: p.latitude,
             longitude: p.longitude,
@@ -115,11 +116,11 @@ export const packService = {
             distance: data.distance,
             expiresAt: data.expires_at,
             tags: data.tags || [],
-            category: data.category || 'Sin categoría', // Incluir categoría
+            category: data.category || 'Sin categoría',
             pickupLocation: data.pickup_location,
             pickupWindows: data.pickup_windows || [],
             status: data.status || 'available',
-            isFree: (data as any).is_free === true, // Asegurar que solo true sea true
+            isFree: data.is_free === true,
             // Campos de geolocalización
             latitude: data.latitude,
             longitude: data.longitude,
@@ -237,10 +238,11 @@ export const packService = {
             distance: p.distance,
             expiresAt: p.expires_at,
             tags: p.tags || [],
-            category: p.category || 'Sin categoría', // Incluir categoría
+            category: p.category || 'Sin categoría',
             pickupLocation: p.pickup_location,
             pickupWindows: p.pickup_windows || [],
             status: p.status || 'available',
+            isFree: p.is_free === true,
         }))
     },
 
@@ -362,7 +364,7 @@ export const packService = {
      * Uses case-insensitive search (ilike) for flexibility
      */
     async getPacksByCategory(category: string): Promise<Pack[]> {
-        // If "todo" or empty, return all packs
+        // Handle unspecified category by returning all available packs
         if (!category || category === 'todo') {
             return this.getPacks()
         }
@@ -396,7 +398,7 @@ export const packService = {
             pickupLocation: p.pickup_location,
             pickupWindows: p.pickup_windows || [],
             status: p.status || 'available',
-            isFree: (p as any).is_free === true, // Asegurar que solo true sea true
+            isFree: p.is_free === true,
         }))
     },
 
@@ -458,7 +460,7 @@ export const packService = {
                     pickupLocation: p.pickup_location,
                     pickupWindows: p.pickup_windows || [],
                     status: p.status || 'available',
-                    isFree: (p as any).is_free === true, // Asegurar que solo true sea true
+                    isFree: p.is_free === true,
                     latitude: p.latitude,
                     longitude: p.longitude,
                     city: p.city,

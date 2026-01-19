@@ -12,7 +12,7 @@ interface PackCardProps {
     sellerRatingCount?: number
 }
 
-export function PackCard({ pack, sellerRating, sellerRatingCount }: readonly PackCardProps) {
+export function PackCard({ pack, sellerRating, sellerRatingCount }: Readonly<PackCardProps>) {
     const averageRating = sellerRating || 0
     const ratingCount = sellerRatingCount || 0
     

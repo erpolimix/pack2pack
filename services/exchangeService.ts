@@ -570,7 +570,8 @@ export const exchangeService = {
             distance: "",
             tags: [],
             pickupLocation: data.pack_offered.pickup_location,
-            pickupWindows: data.pack_offered.pickup_windows
+            pickupWindows: data.pack_offered.pickup_windows,
+            isFree: data.pack_offered.is_free === true
           }
         : undefined,
       packRequested: data.pack_requested
@@ -592,7 +593,8 @@ export const exchangeService = {
             distance: "",
             tags: [],
             pickupLocation: data.pack_requested.pickup_location,
-            pickupWindows: data.pack_requested.pickup_windows
+            pickupWindows: data.pack_requested.pickup_windows,
+            isFree: data.pack_requested.is_free === true
           }
         : undefined,
       requester: data.requester,
@@ -635,7 +637,8 @@ export const exchangeService = {
       distance: "",
       tags: [],
       pickupLocation: data.pickup_location,
-      pickupWindows: data.pickup_windows
+      pickupWindows: data.pickup_windows,
+      isFree: data.is_free === true
     }
   }
 }
