@@ -28,7 +28,21 @@ export function LocationModal({ isOpen, onClose, onLocationSet }: LocationModalP
             onClose()
         } catch (err) {
             console.error("Error obteniendo ubicación:", err)
-            setError("No pudimos obtener tu ubicación. Por favor, introdúcela manualmente.")
+            
+            // Mostrar el mensaje de error detallado al usuario
+            const errorMessage = err instanceof Error ? err.message : String(err)
+            
+            // Si el error incluye diagnóstico, mostrarlo (útil para debug)
+            if (errorMessage.includes('[GEO]')) {
+                // Extraer solo la parte legible para el usuario
+                const userMessage = errorMessage.split('\n\n')[0]
+                const diagnostic = errorMessage.split('\n\n')[1] || ''
+                
+                console.log('=== DIAGNÓSTICO DETALLADO ===\n' + diagnostic)
+                setError(userMessage || "No pudimos obtener tu ubicación. Por favor, introdúcela manualmente.")
+            } else {
+                setError(errorMessage || "No pudimos obtener tu ubicación. Por favor, introdúcela manualmente.")
+            }
         } finally {
             setLoading(false)
         }

@@ -46,68 +46,114 @@ export const geoService = {
 
     /**
      * Obtener ubicación actual del navegador
-     * Implementación optimizada para iOS (Safari/Chrome)
+     * Implementación optimizada para iOS (Safari/Chrome) con diagnóstico detallado
      */
     async getCurrentPosition(): Promise<Coordinates> {
         return new Promise((resolve, reject) => {
+            // Log 1: Verificar soporte de geolocalización
+            const diagnosticInfo: string[] = []
+            diagnosticInfo.push(`[GEO] Navegador: ${navigator.userAgent}`)
+            diagnosticInfo.push(`[GEO] Geolocation API: ${navigator.geolocation ? 'DISPONIBLE' : 'NO DISPONIBLE'}`)
+            
             if (!navigator.geolocation) {
-                reject(new Error("Geolocalización no soportada por este navegador"))
+                const error = "Geolocalización no soportada por este navegador"
+                diagnosticInfo.push(`[GEO] ERROR: ${error}`)
+                reject(new Error(error + "\n\nDiagnóstico:\n" + diagnosticInfo.join("\n")))
                 return
             }
 
-            // Estrategia de doble intento para iOS:
-            // 1. Primero con alta precisión (puede fallar en iOS)
-            // 2. Si falla, reintentar con baja precisión (más tolerante)
+            // Log 2: Estado de permisos (si está disponible)
+            if (navigator.permissions) {
+                navigator.permissions.query({ name: 'geolocation' }).then(result => {
+                    diagnosticInfo.push(`[GEO] Permiso: ${result.state}`)
+                }).catch(() => {
+                    diagnosticInfo.push(`[GEO] Permiso: No se pudo verificar`)
+                })
+            }
+
+            diagnosticInfo.push(`[GEO] Iniciando intento 1 (alta precisión)...`)
             
             const tryHighAccuracy = () => {
+                const startTime = Date.now()
+                
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
+                        const elapsed = Date.now() - startTime
+                        diagnosticInfo.push(`[GEO] ✓ Éxito en ${elapsed}ms`)
+                        diagnosticInfo.push(`[GEO] Precisión: ${position.coords.accuracy}m`)
+                        console.log(diagnosticInfo.join("\n"))
+                        
                         resolve({
                             latitude: position.coords.latitude,
                             longitude: position.coords.longitude
                         })
                     },
                     (error) => {
-                        console.warn("Alta precisión falló, reintentando con baja precisión...", error)
+                        const elapsed = Date.now() - startTime
+                        diagnosticInfo.push(`[GEO] ✗ Intento 1 falló en ${elapsed}ms`)
+                        diagnosticInfo.push(`[GEO] Código error: ${error.code} (${error.message})`)
+                        diagnosticInfo.push(`[GEO] Iniciando intento 2 (baja precisión)...`)
+                        console.warn(diagnosticInfo.join("\n"))
+                        
                         tryLowAccuracy()
                     },
                     {
                         enableHighAccuracy: true,
                         timeout: 15000,
-                        maximumAge: 300000  // 5 minutos cache (iOS necesita esto)
+                        maximumAge: 300000
                     }
                 )
             }
 
             const tryLowAccuracy = () => {
+                const startTime = Date.now()
+                
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
+                        const elapsed = Date.now() - startTime
+                        diagnosticInfo.push(`[GEO] ✓ Éxito en ${elapsed}ms (baja precisión)`)
+                        diagnosticInfo.push(`[GEO] Precisión: ${position.coords.accuracy}m`)
+                        console.log(diagnosticInfo.join("\n"))
+                        
                         resolve({
                             latitude: position.coords.latitude,
                             longitude: position.coords.longitude
                         })
                     },
                     (error) => {
-                        console.error("Error obteniendo ubicación (ambos intentos):", error)
-                        // Mensaje de error más descriptivo según código
-                        let errorMessage = "Error obteniendo ubicación"
+                        const elapsed = Date.now() - startTime
+                        diagnosticInfo.push(`[GEO] ✗ Intento 2 falló en ${elapsed}ms`)
+                        diagnosticInfo.push(`[GEO] Código error: ${error.code} (${error.message})`)
+                        
+                        // Mensaje de error detallado según código
+                        let errorMessage = ""
                         switch (error.code) {
-                            case error.PERMISSION_DENIED:
-                                errorMessage = "Permiso denegado. Por favor, habilita el acceso a ubicación en la configuración de tu navegador."
+                            case 1: // PERMISSION_DENIED
+                                errorMessage = "PERMISO DENEGADO\n\nPor favor, habilita el acceso a ubicación:\n- iOS: Ajustes > Safari/Chrome > Ubicación > Permitir"
+                                diagnosticInfo.push(`[GEO] Causa probable: Usuario negó permiso o no hay permisos en navegador`)
                                 break
-                            case error.POSITION_UNAVAILABLE:
-                                errorMessage = "Ubicación no disponible. Verifica tu conexión GPS/WiFi."
+                            case 2: // POSITION_UNAVAILABLE
+                                errorMessage = "UBICACIÓN NO DISPONIBLE\n\nVerifica:\n- GPS activado\n- WiFi conectado\n- Permisos de ubicación"
+                                diagnosticInfo.push(`[GEO] Causa probable: Hardware GPS no disponible o sin señal`)
                                 break
-                            case error.TIMEOUT:
-                                errorMessage = "Tiempo agotado. Por favor, intenta de nuevo."
+                            case 3: // TIMEOUT
+                                errorMessage = "TIEMPO AGOTADO\n\nEl GPS tardó demasiado.\nIntenta de nuevo o usa entrada manual."
+                                diagnosticInfo.push(`[GEO] Causa probable: GPS lento o sin señal suficiente`)
                                 break
+                            default:
+                                errorMessage = `ERROR DESCONOCIDO (código ${error.code})`
+                                diagnosticInfo.push(`[GEO] Error no reconocido`)
                         }
-                        reject(new Error(errorMessage))
+                        
+                        const fullDiagnostic = diagnosticInfo.join("\n")
+                        console.error(fullDiagnostic)
+                        
+                        reject(new Error(errorMessage + "\n\n" + fullDiagnostic))
                     },
                     {
                         enableHighAccuracy: false,
                         timeout: 20000,
-                        maximumAge: 600000  // 10 minutos cache (muy tolerante)
+                        maximumAge: 600000
                     }
                 )
             }
