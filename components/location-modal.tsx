@@ -22,34 +22,12 @@ export function LocationModal({ isOpen, onClose, onLocationSet }: LocationModalP
         setError("")
         
         try {
-            // Paso 1: Verificar si la API está disponible
+            // Verificar API disponible
             if (!navigator.geolocation) {
-                throw new Error("Tu navegador no soporta geolocalización. Por favor, introduce tu ciudad manualmente.")
+                throw new Error("Tu navegador no soporta geolocalización.\n\nIntroduce tu ciudad manualmente 👇")
             }
 
-            // Paso 2: Verificar permisos ANTES de intentar (si está disponible en el navegador)
-            if (navigator.permissions) {
-                try {
-                    const permissionStatus = await navigator.permissions.query({ name: 'geolocation' as PermissionName })
-                    
-                    if (permissionStatus.state === 'denied') {
-                        throw new Error(
-                            "⚠️ PERMISO DENEGADO\n\n" +
-                            "Para habilitar la ubicación en iOS:\n\n" +
-                            "1. Ve a Ajustes de iOS\n" +
-                            "2. Busca Safari (o Chrome)\n" +
-                            "3. Toca 'Ubicación'\n" +
-                            "4. Selecciona 'Permitir'\n\n" +
-                            "O introduce tu ciudad manualmente abajo 👇"
-                        )
-                    }
-                } catch (permCheckError) {
-                    // Si no se puede verificar permisos, continuar con el intento
-                    console.log("No se pudo verificar permisos, intentando geolocalización de todos modos")
-                }
-            }
-
-            // Paso 3: Intentar obtener ubicación
+            // Intentar obtener ubicación (el servicio maneja los intentos y errores)
             const coords = await geoService.getCurrentPosition()
             const location = await geoService.reverseGeocode(coords)
             geoService.saveUserLocation(location)
@@ -58,15 +36,12 @@ export function LocationModal({ isOpen, onClose, onLocationSet }: LocationModalP
         } catch (err) {
             console.error("Error obteniendo ubicación:", err)
             
-            // Mostrar el mensaje de error detallado al usuario
+            // Mostrar mensaje de error al usuario
             const errorMessage = err instanceof Error ? err.message : String(err)
             
-            // Si el error incluye diagnóstico detallado
+            // Extraer solo la parte legible (sin diagnóstico técnico)
             if (errorMessage.includes('[GEO]')) {
                 const userMessage = errorMessage.split('\n\n')[0]
-                const diagnostic = errorMessage.split('\n\n')[1] || ''
-                
-                console.log('=== DIAGNÓSTICO DETALLADO ===\n' + diagnostic)
                 setError(userMessage)
             } else {
                 setError(errorMessage)

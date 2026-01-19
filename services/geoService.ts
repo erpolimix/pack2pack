@@ -46,11 +46,11 @@ export const geoService = {
 
     /**
      * Obtener ubicación actual del navegador
-     * Implementación optimizada para iOS (Safari/Chrome) con diagnóstico detallado
+     * Implementación optimizada para iOS con estrategia de fallback inmediato
      */
     async getCurrentPosition(): Promise<Coordinates> {
         return new Promise((resolve, reject) => {
-            // Log 1: Verificar soporte de geolocalización
+            // Log de diagnóstico
             const diagnosticInfo: string[] = []
             diagnosticInfo.push(`[GEO] Navegador: ${navigator.userAgent}`)
             diagnosticInfo.push(`[GEO] Geolocation API: ${navigator.geolocation ? 'DISPONIBLE' : 'NO DISPONIBLE'}`)
@@ -62,104 +62,79 @@ export const geoService = {
                 return
             }
 
-            // Log 2: Estado de permisos (si está disponible)
-            if (navigator.permissions) {
-                navigator.permissions.query({ name: 'geolocation' }).then(result => {
-                    diagnosticInfo.push(`[GEO] Permiso: ${result.state}`)
-                }).catch(() => {
-                    diagnosticInfo.push(`[GEO] Permiso: No se pudo verificar`)
-                })
-            }
-
-            diagnosticInfo.push(`[GEO] Iniciando intento 1 (alta precisión)...`)
+            // iOS Safari requiere un enfoque más simple y directo
+            // Usar solo un intento con configuración muy permisiva
+            diagnosticInfo.push(`[GEO] Iniciando obtención de ubicación...`)
+            const startTime = Date.now()
             
-            const tryHighAccuracy = () => {
-                const startTime = Date.now()
-                
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const elapsed = Date.now() - startTime
-                        diagnosticInfo.push(`[GEO] ✓ Éxito en ${elapsed}ms`)
-                        diagnosticInfo.push(`[GEO] Precisión: ${position.coords.accuracy}m`)
-                        console.log(diagnosticInfo.join("\n"))
-                        
-                        resolve({
-                            latitude: position.coords.latitude,
-                            longitude: position.coords.longitude
-                        })
-                    },
-                    (error) => {
-                        const elapsed = Date.now() - startTime
-                        diagnosticInfo.push(`[GEO] ✗ Intento 1 falló en ${elapsed}ms`)
-                        diagnosticInfo.push(`[GEO] Código error: ${error.code} (${error.message})`)
-                        diagnosticInfo.push(`[GEO] Iniciando intento 2 (baja precisión)...`)
-                        console.warn(diagnosticInfo.join("\n"))
-                        
-                        tryLowAccuracy()
-                    },
-                    {
-                        enableHighAccuracy: true,
-                        timeout: 15000,
-                        maximumAge: 300000
-                    }
-                )
-            }
-
-            const tryLowAccuracy = () => {
-                const startTime = Date.now()
-                
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const elapsed = Date.now() - startTime
-                        diagnosticInfo.push(`[GEO] ✓ Éxito en ${elapsed}ms (baja precisión)`)
-                        diagnosticInfo.push(`[GEO] Precisión: ${position.coords.accuracy}m`)
-                        console.log(diagnosticInfo.join("\n"))
-                        
-                        resolve({
-                            latitude: position.coords.latitude,
-                            longitude: position.coords.longitude
-                        })
-                    },
-                    (error) => {
-                        const elapsed = Date.now() - startTime
-                        diagnosticInfo.push(`[GEO] ✗ Intento 2 falló en ${elapsed}ms`)
-                        diagnosticInfo.push(`[GEO] Código error: ${error.code} (${error.message})`)
-                        
-                        // Mensaje de error detallado según código
-                        let errorMessage = ""
-                        switch (error.code) {
-                            case 1: // PERMISSION_DENIED
-                                errorMessage = "PERMISO DENEGADO\n\nPor favor, habilita el acceso a ubicación:\n- iOS: Ajustes > Safari/Chrome > Ubicación > Permitir"
-                                diagnosticInfo.push(`[GEO] Causa probable: Usuario negó permiso o no hay permisos en navegador`)
-                                break
-                            case 2: // POSITION_UNAVAILABLE
-                                errorMessage = "UBICACIÓN NO DISPONIBLE\n\nVerifica:\n- GPS activado\n- WiFi conectado\n- Permisos de ubicación"
-                                diagnosticInfo.push(`[GEO] Causa probable: Hardware GPS no disponible o sin señal`)
-                                break
-                            case 3: // TIMEOUT
-                                errorMessage = "TIEMPO AGOTADO\n\nEl GPS tardó demasiado.\nIntenta de nuevo o usa entrada manual."
-                                diagnosticInfo.push(`[GEO] Causa probable: GPS lento o sin señal suficiente`)
-                                break
-                            default:
-                                errorMessage = `ERROR DESCONOCIDO (código ${error.code})`
-                                diagnosticInfo.push(`[GEO] Error no reconocido`)
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const elapsed = Date.now() - startTime
+                    diagnosticInfo.push(`[GEO] ✓ Éxito en ${elapsed}ms`)
+                    diagnosticInfo.push(`[GEO] Precisión: ${position.coords.accuracy}m`)
+                    console.log(diagnosticInfo.join("\n"))
+                    
+                    resolve({
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude
+                    })
+                },
+                (error) => {
+                    const elapsed = Date.now() - startTime
+                    diagnosticInfo.push(`[GEO] ✗ Falló en ${elapsed}ms`)
+                    diagnosticInfo.push(`[GEO] Código error: ${error.code}`)
+                    diagnosticInfo.push(`[GEO] Mensaje: ${error.message}`)
+                    
+                    // Mensaje de error específico para iOS
+                    let errorMessage = ""
+                    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+                    
+                    if (error.code === 1) { // PERMISSION_DENIED
+                        if (isIOS) {
+                            errorMessage = "🔒 iOS está bloqueando el acceso a ubicación\n\n" +
+                                         "Esto puede pasar incluso con permisos activados.\n\n" +
+                                         "💡 Solución rápida:\n" +
+                                         "Introduce tu ciudad manualmente abajo 👇\n\n" +
+                                         "Si prefieres usar GPS:\n" +
+                                         "1. Cierra Safari completamente\n" +
+                                         "2. Ajustes > Safari > Ubicación > Preguntar\n" +
+                                         "3. Abre Safari y recarga la página\n" +
+                                         "4. Cuando pregunte, toca 'Permitir'"
+                        } else {
+                            errorMessage = "PERMISO DENEGADO\n\nPor favor, habilita el acceso a ubicación en la configuración de tu navegador."
                         }
-                        
-                        const fullDiagnostic = diagnosticInfo.join("\n")
-                        console.error(fullDiagnostic)
-                        
-                        reject(new Error(errorMessage + "\n\n" + fullDiagnostic))
-                    },
-                    {
-                        enableHighAccuracy: false,
-                        timeout: 20000,
-                        maximumAge: 600000
+                        diagnosticInfo.push(`[GEO] Causa: Usuario denegó permiso o bloqueado por navegador`)
+                    } else if (error.code === 2) { // POSITION_UNAVAILABLE
+                        errorMessage = "📍 No se pudo determinar tu ubicación\n\n" +
+                                     "Verifica que:\n" +
+                                     "• GPS esté activado\n" +
+                                     "• WiFi esté conectado\n" +
+                                     "• Estés en un lugar con buena señal\n\n" +
+                                     "O introduce tu ciudad manualmente 👇"
+                        diagnosticInfo.push(`[GEO] Causa: Hardware GPS no disponible o sin señal`)
+                    } else if (error.code === 3) { // TIMEOUT
+                        errorMessage = "⏱️ El GPS tardó demasiado\n\n" +
+                                     "La ubicación está tardando mucho.\n\n" +
+                                     "Introduce tu ciudad manualmente 👇"
+                        diagnosticInfo.push(`[GEO] Causa: GPS lento o sin señal suficiente`)
+                    } else {
+                        errorMessage = `ERROR (código ${error.code})\n\nIntroduce tu ciudad manualmente 👇`
+                        diagnosticInfo.push(`[GEO] Error no reconocido`)
                     }
-                )
-            }
-
-            // Iniciar con alta precisión
-            tryHighAccuracy()
+                    
+                    const fullDiagnostic = diagnosticInfo.join("\n")
+                    console.error(fullDiagnostic)
+                    
+                    reject(new Error(errorMessage + "\n\n" + fullDiagnostic))
+                },
+                {
+                    // Configuración muy permisiva para iOS
+                    enableHighAccuracy: false,  // iOS a veces rechaza alta precisión
+                    timeout: 10000,              // 10 segundos
+                    maximumAge: 600000          // Acepta cache de 10 minutos
+                }
+            )
         })
     },
 
