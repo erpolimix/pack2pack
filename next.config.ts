@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "*.supabase.co",
+        hostname: new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!).hostname,
       },
       {
         protocol: "https",
