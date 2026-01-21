@@ -11,10 +11,15 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "github.com",
       },
-      {
-        protocol: "https",
-        hostname: "*.supabase.co",
-      },
+      // Dynamically add Supabase hostname if the URL is set and valid
+      ...(process.env.NEXT_PUBLIC_SUPABASE_URL
+        ? [
+            {
+              protocol: "https",
+              hostname: new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname,
+            } as const,
+          ]
+        : []),
       {
         protocol: "https",
         hostname: "lh3.googleusercontent.com",
