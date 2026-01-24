@@ -13,10 +13,6 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "*.supabase.co",
-      },
-      {
-        protocol: "https",
         hostname: "lh3.googleusercontent.com",
       },
     ],
@@ -28,5 +24,20 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 60 * 60 * 24 * 30, // Cache 30 días
   },
 };
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+if (supabaseUrl) {
+  try {
+    const url = new URL(supabaseUrl);
+    if (nextConfig.images && nextConfig.images.remotePatterns) {
+        nextConfig.images.remotePatterns.push({
+            protocol: "https",
+            hostname: url.hostname,
+        });
+    }
+  } catch (error) {
+    console.error("Invalid NEXT_PUBLIC_SUPABASE_URL:", error);
+  }
+}
 
 export default nextConfig;
