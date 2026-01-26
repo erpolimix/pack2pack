@@ -13,10 +13,6 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "*.supabase.co",
-      },
-      {
-        protocol: "https",
         hostname: "lh3.googleusercontent.com",
       },
     ],
@@ -28,5 +24,22 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 60 * 60 * 24 * 30, // Cache 30 días
   },
 };
+
+// Dynamically add Supabase hostname if the URL is valid
+if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
+  try {
+    const supabaseHostname = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname;
+
+    // Ensure images and remotePatterns exist before pushing
+    if (nextConfig.images && nextConfig.images.remotePatterns) {
+      nextConfig.images.remotePatterns.push({
+        protocol: 'https',
+        hostname: supabaseHostname,
+      });
+    }
+  } catch (e) {
+    console.error("Invalid NEXT_PUBLIC_SUPABASE_URL provided. Supabase hostname for images will not be added.", e);
+  }
+}
 
 export default nextConfig;
