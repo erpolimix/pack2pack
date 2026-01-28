@@ -13,7 +13,8 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "*.supabase.co",
+        // TODO: Replace with your Supabase project ID
+        hostname: "<YOUR_PROJECT_ID>.supabase.co",
       },
       {
         protocol: "https",
