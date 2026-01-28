@@ -1,5 +1,10 @@
 import type { NextConfig } from "next";
 
+// Dynamically determine the Supabase hostname to avoid security vulnerabilities
+const supabaseHostname = process.env.NEXT_PUBLIC_SUPABASE_URL
+  ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
+  : "your-project-id.supabase.co"; // Fallback for safety
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
@@ -13,7 +18,10 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "*.supabase.co",
+        // 🛡️ SENTINEL: SECURITY PATCH
+        // The wildcard "*.supabase.co" is too permissive and creates an open redirect vulnerability.
+        // This now dynamically uses your specific Supabase project hostname from the environment variable.
+        hostname: supabaseHostname,
       },
       {
         protocol: "https",
