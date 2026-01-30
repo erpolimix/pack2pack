@@ -3,7 +3,6 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/navbar";
 import { cn } from "@/lib/utils";
-import "@/lib/debug-auth"; // Herramientas de debug para consola
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
