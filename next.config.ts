@@ -13,10 +13,6 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "*.supabase.co",
-      },
-      {
-        protocol: "https",
         hostname: "lh3.googleusercontent.com",
       },
     ],
@@ -28,5 +24,21 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 60 * 60 * 24 * 30, // Cache 30 días
   },
 };
+
+// Configurar dinámicamente el hostname de Supabase para evitar wildcards inseguros (*.supabase.co)
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+if (supabaseUrl) {
+  try {
+    const hostname = new URL(supabaseUrl).hostname;
+    if (nextConfig.images && nextConfig.images.remotePatterns) {
+      nextConfig.images.remotePatterns.push({
+        protocol: "https",
+        hostname: hostname,
+      });
+    }
+  } catch (e) {
+    console.error("Invalid NEXT_PUBLIC_SUPABASE_URL for remotePatterns:", e);
+  }
+}
 
 export default nextConfig;
