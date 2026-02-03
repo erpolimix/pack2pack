@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { aiService } from "@/services/aiService"
+import { aiAction } from "@/app/actions/ai"
 import { packService } from "@/services/packService"
 import { geoService, type Location } from "@/services/geoService"
 import { supabase } from "@/lib/supabase"
@@ -149,14 +149,17 @@ export function CreatePackForm() {
             reader.readAsDataURL(compressedFile)
 
             // Auto-analyze with AI (usa archivo comprimido)
-            const aiSuggestion = await aiService.generateTitleAndDescription(compressedFile)
-            if (aiSuggestion.title && !aiSuggestion.title.startsWith("No se ha podido")) {
-                setTitle(aiSuggestion.title)
-            }
-            if (aiSuggestion.description && !aiSuggestion.description.startsWith("No se ha podido")) {
+            const formData = new FormData()
+            formData.append('file', compressedFile)
+
+            const aiSuggestion = await aiAction('all', formData) as { title: string, description: string }
+            if (aiSuggestion.title) setTitle(aiSuggestion.title)
+            if (aiSuggestion.description) {
                 setDescription(aiSuggestion.description)
-                // Detectar categoría automáticamente basada en la descripción
-                const detectedCategory = await aiService.detectCategory(compressedFile, aiSuggestion.description)
+                const catData = new FormData()
+                catData.append('file', compressedFile)
+                catData.append('description', aiSuggestion.description)
+                const detectedCategory = await aiAction('cat', catData) as string
                 setCategory(detectedCategory)
             }
         } catch (error) {
@@ -356,7 +359,9 @@ export function CreatePackForm() {
                                 }
                                 setIsAnalyzing(true);
                                 try {
-                                    const d = await aiService.generateDescription(selectedFile);
+                                    const formData = new FormData()
+                                    formData.append('file', selectedFile)
+                                    const d = await aiAction('desc', formData) as string;
                                     setDescription(d);
                                 } finally {
                                     setIsAnalyzing(false);
