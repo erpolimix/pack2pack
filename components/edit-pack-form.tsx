@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { aiService } from "@/services/aiService"
+import { aiAction } from "@/app/actions/ai"
 import { packService, Pack } from "@/services/packService"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -118,8 +118,10 @@ export function EditPackForm({ pack, onSuccess }: EditPackFormProps) {
         // Auto-analyze
         setIsAnalyzing(true)
         try {
-            const aiDesc = await aiService.generateDescription(file)
-            if (aiDesc && !aiDesc.startsWith("No se ha podido")) {
+            const formData = new FormData()
+            formData.append('file', file)
+            const aiDesc = await aiAction('desc', formData) as string
+            if (aiDesc) {
                 setDescription(aiDesc)
                 // Heuristic title guess based on description
                 setTitle(aiDesc.split(' ').slice(0, 3).join(' ') + " Pack")
@@ -284,7 +286,9 @@ export function EditPackForm({ pack, onSuccess }: EditPackFormProps) {
                                 }
                                 setIsAnalyzing(true);
                                 try {
-                                    const d = await aiService.generateDescription(selectedFile);
+                                    const formData = new FormData()
+                                    formData.append('file', selectedFile)
+                                    const d = await aiAction('desc', formData) as string;
                                     setDescription(d);
                                 } finally {
                                     setIsAnalyzing(false);
