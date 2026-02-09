@@ -114,12 +114,15 @@ export default function HeroesPage() {
                 <Zap className="group-hover:fill-white transition-colors" size={20} />
               </span>
             </button>
-            <button className="group flex items-center gap-3 px-8 py-4 bg-white/5 hover:bg-white/10 backdrop-blur-sm border border-white/10 rounded-xl transition-all">
+            <a
+              href="#manifiesto"
+              className="group flex items-center gap-3 px-8 py-4 bg-white/5 hover:bg-white/10 backdrop-blur-sm border border-white/10 rounded-xl transition-all"
+            >
               <div className="w-10 h-10 rounded-full bg-white text-slate-900 flex items-center justify-center group-hover:scale-110 transition-transform">
                 <Play size={16} className="ml-1 fill-slate-900" />
               </div>
               <span className="font-medium">Ver Manifiesto</span>
-            </button>
+            </a>
           </div>
         </div>
 
@@ -244,7 +247,7 @@ export default function HeroesPage() {
       </section>
 
       {/* Manifesto Section */}
-      <section className="py-20 bg-brand-primary/20 overflow-hidden relative">
+      <section id="manifiesto" className="py-20 bg-brand-primary/20 overflow-hidden relative">
         <div className="absolute top-0 right-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5"></div>
         
         <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center gap-16 relative z-10">
@@ -252,16 +255,12 @@ export default function HeroesPage() {
             <div className="relative group cursor-pointer">
               <div className="absolute -inset-1 bg-gradient-to-r from-brand-primary to-indigo-600 rounded-2xl blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200"></div>
               <div className="relative rounded-2xl overflow-hidden aspect-video shadow-2xl">
-                <img 
-                  src="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?ixlib=rb-1.2.1&auto=format&fit=crop&w=1200&q=80" 
-                  alt="Video Thumbnail" 
-                  className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
+                <video
+                  src="/Video_Manifiesto.mp4"
+                  className="w-full h-full object-cover"
+                  controls
+                  preload="metadata"
                 />
-                <div className="absolute inset-0 bg-slate-900/40 group-hover:bg-slate-900/20 transition-colors flex items-center justify-center">
-                  <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30 group-hover:scale-110 transition-transform">
-                    <Play size={32} className="ml-2 text-white fill-white" />
-                  </div>
-                </div>
               </div>
             </div>
           </div>
