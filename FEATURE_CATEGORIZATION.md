@@ -253,7 +253,7 @@ WHERE table_name = 'packs' AND column_name = 'category';
 ### Problema: IA no detecta categoría, siempre "Otro"
 
 **Solución:**
-1. Verifica `NEXT_PUBLIC_GEMINI_API_KEY` está en `.env.local`
+1. Verifica `GEMINI_API_KEY` está en `.env.local` (ahora se maneja en el servidor por seguridad)
 2. Verifica que API key es válida (prueba en Google AI Studio)
 3. Revisa logs en consola del navegador
 
