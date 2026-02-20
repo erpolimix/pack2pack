@@ -9,12 +9,11 @@ import { authService } from "@/services/authService"
 import { exchangeService } from "@/services/exchangeService"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card } from "@/components/ui/card"
 import { Toast } from "@/components/ui/toast"
 import { useToast } from "@/lib/useToast"
-import { ArrowLeft, MapPin, Share2, Shield, User, Calendar, Clock, Star } from "lucide-react"
+import { ArrowLeft, MapPin, Share2, Shield, User, Clock, Star } from "lucide-react"
 import { RatingsDisplay } from "@/components/ratings-display"
 import { ExchangeProposalModal } from "@/components/exchange-proposal-modal"
 import Link from "next/link"
@@ -56,6 +55,8 @@ export default function PackDetailPage() {
     const [bookingInProgress, setBookingInProgress] = useState(false)
     const [hasActiveBooking, setHasActiveBooking] = useState(false)
     const [isPackBooked, setIsPackBooked] = useState(false)
+    const [hasActiveExchange, setHasActiveExchange] = useState(false)
+    const [isPackInExchange, setIsPackInExchange] = useState(false)
     const [sellerRatingStats, setSellerRatingStats] = useState<UserRatingsStats | null>(null)
     const [sellerRatings, setSellerRatings] = useState<any[]>([])
     
@@ -100,6 +101,18 @@ export default function PackDetailPage() {
                         const packBooked = await bookingService.isPackBooked(foundPack.id)
                         setIsPackBooked(packBooked)
                     }
+                    
+                    // Check if user has active exchange for this pack
+                    if (user && foundPack) {
+                        const hasExchange = await exchangeService.hasActiveExchange(foundPack.id)
+                        setHasActiveExchange(hasExchange)
+                    }
+                    
+                    // Check if pack is in any active exchange
+                    if (foundPack) {
+                        const packInExchange = await exchangeService.isPackInExchange(foundPack.id)
+                        setIsPackInExchange(packInExchange)
+                    }
                 } catch (error) {
                     console.error("Error loading pack details:", error)
                 } finally {
@@ -125,6 +138,14 @@ export default function PackDetailPage() {
             showError("Este pack ya ha sido reservado por otro usuario")
             return
         }
+        if (hasActiveExchange) {
+            showError("Ya tienes un intercambio activo para este pack")
+            return
+        }
+        if (isPackInExchange) {
+            showError("Este pack ya está en un intercambio activo")
+            return
+        }
         setShowBookingModal(true)
     }
 
@@ -135,6 +156,14 @@ export default function PackDetailPage() {
         }
         if (isOwner) {
             showError("No puedes intercambiar tu propio pack")
+            return
+        }
+        if (hasActiveExchange) {
+            showError("Ya tienes un intercambio activo para este pack")
+            return
+        }
+        if (isPackInExchange) {
+            showError("Este pack ya está en un intercambio activo")
             return
         }
         if (userPacks.length === 0) {
@@ -248,12 +277,17 @@ export default function PackDetailPage() {
                             <Button
                                 size="lg"
                                 className="w-full bg-gradient-to-r from-brand-primary to-brand-dark hover:from-brand-dark hover:to-brand-primary text-white font-semibold rounded-xl transition-all duration-300 shadow-md hover:shadow-xl"
-                                disabled={isOwner || hasActiveBooking || isPackBooked}
+                                disabled={isOwner || hasActiveBooking || isPackBooked || hasActiveExchange || isPackInExchange}
                                 onClick={handleReserveClick}
                             >
-                                {isOwner ? "Es tu propio pack" : (hasActiveBooking || isPackBooked) ? "Ya reservado" : "Reservar ahora"}
+                                {isOwner 
+                                    ? "Es tu propio pack" 
+                                    : (hasActiveBooking || isPackBooked || hasActiveExchange || isPackInExchange) 
+                                        ? "No disponible" 
+                                        : "Reservar ahora"
+                                }
                             </Button>
-                            {!isOwner && pack.status === 'available' && !hasActiveBooking && !isPackBooked && userPacks.length > 0 && (
+                            {!isOwner && pack.status === 'available' && !hasActiveBooking && !isPackBooked && !hasActiveExchange && !isPackInExchange && userPacks.length > 0 && (
                                 <Button
                                     variant="outline"
                                     size="lg"

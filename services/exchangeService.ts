@@ -36,6 +36,47 @@ export interface Exchange {
 
 export const exchangeService = {
   /**
+   * Verificar si el usuario actual tiene un intercambio activo para un pack específico
+   * (como requester u owner, en estado pending o accepted)
+   */
+  async hasActiveExchange(packId: string): Promise<boolean> {
+    const user = await authService.getUser()
+    if (!user) return false
+
+    const { data, error } = await supabase
+      .from("exchanges")
+      .select("id")
+      .or(`pack_requested_id.eq.${packId},pack_offered_id.eq.${packId}`)
+      .or(`requester_id.eq.${user.id},owner_id.eq.${user.id}`)
+      .in("status", ["pending", "accepted"])
+
+    if (error) {
+      console.error("Error checking active exchange:", error)
+      return false
+    }
+
+    return (data && data.length > 0)
+  },
+
+  /**
+   * Verificar si un pack tiene algún intercambio activo (cualquier usuario)
+   */
+  async isPackInExchange(packId: string): Promise<boolean> {
+    const { data, error } = await supabase
+      .from("exchanges")
+      .select("id")
+      .or(`pack_requested_id.eq.${packId},pack_offered_id.eq.${packId}`)
+      .in("status", ["pending", "accepted"])
+
+    if (error) {
+      console.error("Error checking pack in exchange:", error)
+      return false
+    }
+
+    return (data && data.length > 0)
+  },
+
+  /**
    * Proponer un intercambio de packs
    * Validaciones:
    * - Usuario debe estar logueado
@@ -76,6 +117,18 @@ export const exchangeService = {
 
     if (packRequested.seller_id === user.id) {
       throw new Error("No puedes intercambiar con tus propios packs")
+    }
+
+    // Validar que el usuario no tenga ya un intercambio activo para el pack solicitado
+    const hasActiveExchangeForRequested = await this.hasActiveExchange(packRequestedId)
+    if (hasActiveExchangeForRequested) {
+      throw new Error("Ya tienes un intercambio activo para este pack")
+    }
+
+    // Validar que el pack ofrecido no esté ya en otro intercambio activo
+    const isOfferedInExchange = await this.isPackInExchange(packOfferedId)
+    if (isOfferedInExchange) {
+      throw new Error("Tu pack ya está en otro intercambio activo")
     }
 
     // Crear propuesta
