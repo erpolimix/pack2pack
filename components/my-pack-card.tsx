@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Clock, Pencil, CheckCircle2, Trash2 } from "lucide-react"
+import { Clock, Pencil, CheckCircle2, Trash2, RefreshCw } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -9,9 +9,10 @@ interface MyPackCardProps {
     readonly pack: Pack
     readonly onMarkSold: (packId: string) => void
     readonly onDelete: (packId: string) => void
+    readonly onRenew: (packId: string) => void
 }
 
-export function MyPackCard({ pack, onMarkSold, onDelete }: MyPackCardProps) {
+export function MyPackCard({ pack, onMarkSold, onDelete, onRenew }: MyPackCardProps) {
     const statusColors: Record<string, string> = {
         available: "bg-green-100 text-green-800",
         sold: "bg-blue-100 text-blue-800",
@@ -27,6 +28,7 @@ export function MyPackCard({ pack, onMarkSold, onDelete }: MyPackCardProps) {
     }
 
     const isAvailable = pack.status === 'available'
+    const isExpired = pack.status === 'expired'
 
     return (
         <Card className="pack-card group border-0 shadow-md hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden bg-white flex flex-col h-full relative">
@@ -70,6 +72,7 @@ export function MyPackCard({ pack, onMarkSold, onDelete }: MyPackCardProps) {
 
                     {/* Action Buttons */}
                     <div className="flex flex-col gap-2">
+                        {/* Row 1: Editar + Vendido */}
                         <div className="flex gap-2">
                             <Button
                                 asChild
@@ -90,6 +93,19 @@ export function MyPackCard({ pack, onMarkSold, onDelete }: MyPackCardProps) {
                                 </Button>
                             )}
                         </div>
+                        
+                        {/* Row 2: Renovar (solo si expirado) */}
+                        {isExpired && (
+                            <Button
+                                onClick={() => onRenew(pack.id)}
+                                className="w-full bg-green-500 text-white hover:bg-green-600 font-bold rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
+                            >
+                                <RefreshCw className="h-4 w-4" />
+                                Renovar (+7 días)
+                            </Button>
+                        )}
+                        
+                        {/* Row 3: Eliminar */}
                         <Button
                             onClick={() => onDelete(pack.id)}
                             variant="outline"

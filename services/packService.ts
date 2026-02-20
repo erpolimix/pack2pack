@@ -28,11 +28,13 @@ export interface Pack {
 
 export const packService = {
     async getPacks(): Promise<Pack[]> {
-        // First get all available packs
+        // First get all available packs that haven't expired
+        const now = new Date().toISOString()
         const { data: packs, error } = await supabase
             .from('packs')
             .select('*')
             .eq('status', 'available')
+            .gt('expires_at', now)  // Only get packs that haven't expired
             .order('created_at', { ascending: false })
 
         if (error) {
@@ -225,25 +227,66 @@ export const packService = {
             return []
         }
 
-        return (data || []).map(p => ({
-            id: p.id,
-            title: p.title,
-            description: p.description,
-            price: Number(p.price),
-            originalPrice: Number(p.original_price),
-            imageUrl: p.image_url,
-            sellerName: p.seller_name,
-            seller_id: p.seller_id,
-            location: p.location,
-            distance: p.distance,
-            expiresAt: p.expires_at,
-            tags: p.tags || [],
-            category: p.category || 'Sin categoría',
-            pickupLocation: p.pickup_location,
-            pickupWindows: p.pickup_windows || [],
-            status: p.status || 'available',
-            isFree: p.is_free === true,
-        }))
+        const now = new Date()
+
+        return (data || []).map(p => {
+            // Check if pack has expired
+            const isExpired = p.expires_at && new Date(p.expires_at) < now
+            
+            return {
+                id: p.id,
+                title: p.title,
+                description: p.description,
+                price: Number(p.price),
+                originalPrice: Number(p.original_price),
+                imageUrl: p.image_url,
+                sellerName: p.seller_name,
+                seller_id: p.seller_id,
+                location: p.location,
+                distance: p.distance,
+                expiresAt: p.expires_at,
+                tags: p.tags || [],
+                category: p.category || 'Sin categoría',
+                pickupLocation: p.pickup_location,
+                pickupWindows: p.pickup_windows || [],
+                // If pack is expired and status is still 'available', mark as expired
+                status: (isExpired && p.status === 'available') ? 'expired' : (p.status || 'available'),
+                isFree: p.is_free === true,
+            }
+        })
+    },
+
+    async renewPack(packId: string) {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) throw new Error("Must be logged in to renew a pack")
+
+        // Check ownership
+        const { data: pack } = await supabase
+            .from('packs')
+            .select('seller_id')
+            .eq('id', packId)
+            .single()
+
+        if (!pack) throw new Error("Pack not found")
+        if (pack.seller_id !== user.id) {
+            throw new Error("Unauthorized: You can only renew your own packs")
+        }
+
+        // Extend expiration by 7 days from now
+        const newExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+
+        const { error } = await supabase
+            .from('packs')
+            .update({ 
+                expires_at: newExpiresAt,
+                status: 'available'
+            })
+            .eq('id', packId)
+
+        if (error) {
+            console.error("Error renewing pack:", error)
+            throw error
+        }
     },
 
     async updatePack(packId: string, pack: Partial<Pack>) {

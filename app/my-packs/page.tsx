@@ -100,6 +100,28 @@ export default function MyPacksPage() {
         }
     }
 
+    const handleRenew = async (packId: string) => {
+        try {
+            await packService.renewPack(packId)
+            // Update the pack in the local state
+            setPacks(packs.map((pack) => {
+                if (pack.id === packId) {
+                    return {
+                        ...pack,
+                        status: 'available',
+                        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+                    }
+                }
+                return pack
+            }))
+            showToast("Pack renovado exitosamente (+7 días)", "success")
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : "Error desconocido"
+            console.error("Error renewing pack:", error)
+            showToast(`Error: ${errorMessage}`, "error")
+        }
+    }
+
     if (loading) {
         return (
             <div className="min-h-screen bg-brand-cream flex items-center justify-center">
@@ -183,6 +205,7 @@ export default function MyPacksPage() {
                                     pack={pack}
                                     onMarkSold={handleMarkAsSold}
                                     onDelete={handleDelete}
+                                    onRenew={handleRenew}
                                 />
                             ))}
                         </div>
