@@ -148,16 +148,17 @@ export function CreatePackForm() {
             }
             reader.readAsDataURL(compressedFile)
 
-            // Auto-analyze with AI (usa archivo comprimido)
-            const aiSuggestion = await aiService.generateTitleAndDescription(compressedFile)
-            if (aiSuggestion.title && !aiSuggestion.title.startsWith("No se ha podido")) {
-                setTitle(aiSuggestion.title)
+            // OPTIMIZADO: Auto-analyze con UNA sola llamada (título + descripción + categoría)
+            const aiResult = await aiService.generatePackComplete(compressedFile)
+            
+            if (aiResult.title && !aiResult.title.startsWith("No se ha podido")) {
+                setTitle(aiResult.title)
             }
-            if (aiSuggestion.description && !aiSuggestion.description.startsWith("No se ha podido")) {
-                setDescription(aiSuggestion.description)
-                // Detectar categoría automáticamente basada en la descripción
-                const detectedCategory = await aiService.detectCategory(compressedFile, aiSuggestion.description)
-                setCategory(detectedCategory)
+            if (aiResult.description && !aiResult.description.startsWith("No se ha podido")) {
+                setDescription(aiResult.description)
+            }
+            if (aiResult.category) {
+                setCategory(aiResult.category)
             }
         } catch (error) {
             console.error("Error procesando imagen:", error)
@@ -356,8 +357,18 @@ export function CreatePackForm() {
                                 }
                                 setIsAnalyzing(true);
                                 try {
-                                    const d = await aiService.generateDescription(selectedFile);
-                                    setDescription(d);
+                                    // OPTIMIZADO: Usar generatePackComplete en lugar de solo descripción
+                                    const aiResult = await aiService.generatePackComplete(selectedFile);
+                                    if (aiResult.description) {
+                                        setDescription(aiResult.description);
+                                    }
+                                    // Bonus: Actualizar también título y categoría si están vacíos
+                                    if (aiResult.title && !title) {
+                                        setTitle(aiResult.title);
+                                    }
+                                    if (aiResult.category && !category) {
+                                        setCategory(aiResult.category);
+                                    }
                                 } finally {
                                     setIsAnalyzing(false);
                                 }
