@@ -3,8 +3,8 @@
 import { useState } from "react"
 import Image from "next/image"
 import { exchangeService, type Exchange } from "@/services/exchangeService"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Toast } from "@/components/ui/toast"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/lib/useToast"
 
@@ -38,7 +38,9 @@ export function ExchangeCard({
   const [showValidationCode, setShowValidationCode] = useState(false)
   const [validationCode, setValidationCode] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const { showError, showSuccess } = useToast()
+  const [showTimeWindowModal, setShowTimeWindowModal] = useState(false)
+  const [selectedTimeWindow, setSelectedTimeWindow] = useState("")
+  const { showError, showSuccess, toast, hideToast } = useToast()
 
   const otherUser = isRequester ? exchange.owner : exchange.requester
 
@@ -55,8 +57,17 @@ export function ExchangeCard({
   const isExpired = new Date(exchange.expiresAt) < new Date() && exchange.status === "pending"
 
   // Botón Aceptar (solo para owner de pack solicitado)
-  const handleAccept = async () => {
-    if (!exchange.selectedTimeWindow) {
+  const handleAcceptClick = () => {
+    // Verificar que el pack tenga franjas horarias disponibles
+    if (!exchange.packRequested?.pickupWindows || exchange.packRequested.pickupWindows.length === 0) {
+      showError("El pack no tiene franjas horarias configuradas")
+      return
+    }
+    setShowTimeWindowModal(true)
+  }
+
+  const handleConfirmAccept = async () => {
+    if (!selectedTimeWindow) {
       showError("Debes seleccionar una franja horaria")
       return
     }
@@ -65,9 +76,11 @@ export function ExchangeCard({
     try {
       await exchangeService.acceptExchange(
         exchange.id,
-        exchange.selectedTimeWindow
+        selectedTimeWindow
       )
       showSuccess("¡Propuesta aceptada!")
+      setShowTimeWindowModal(false)
+      setSelectedTimeWindow("")
       onActionCompleted?.()
     } catch (error) {
       showError(error instanceof Error ? error.message : "Error al aceptar")
@@ -270,7 +283,7 @@ export function ExchangeCard({
           <button
             onClick={handleValidate}
             disabled={validationCode.length !== 6 || isLoading}
-            className="w-full mt-3 bg-purple-600 text-white font-bold py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50"
+            className="w-full mt-3 bg-brand-primary text-white font-bold py-3 rounded-xl hover:bg-brand-dark disabled:opacity-50 shadow-md hover:shadow-lg transition-all"
           >
             {isLoading ? "Validando..." : "Validar Intercambio"}
           </button>
@@ -305,18 +318,18 @@ export function ExchangeCard({
         {!isRequester && exchange.status === "pending" && !isExpired && (
           <>
             <button
-              onClick={handleAccept}
+              onClick={handleAcceptClick}
               disabled={isLoading}
-              className="flex-1 min-w-[120px] bg-green-600 text-white font-semibold py-2 px-3 rounded-xl hover:bg-green-700 disabled:opacity-50 transition-all text-sm"
+              className="flex-1 min-w-[120px] bg-brand-primary text-white font-bold py-3 px-4 rounded-xl hover:bg-brand-dark disabled:opacity-50 transition-all shadow-md hover:shadow-lg"
             >
-              {isLoading ? "..." : "Aceptar"}
+              {isLoading ? "Aceptando..." : "Aceptar"}
             </button>
             <button
               onClick={handleReject}
               disabled={isLoading}
-              className="flex-1 min-w-[120px] bg-red-500 text-white py-2 px-3 rounded-xl font-semibold hover:bg-red-600 disabled:opacity-50 transition-all text-sm"
+              className="flex-1 min-w-[120px] bg-red-500 text-white py-3 px-4 rounded-xl font-bold hover:bg-red-600 disabled:opacity-50 transition-all shadow-md hover:shadow-lg"
             >
-              {isLoading ? "..." : "Rechazar"}
+              {isLoading ? "Rechazando..." : "Rechazar"}
             </button>
           </>
         )}
@@ -326,9 +339,9 @@ export function ExchangeCard({
           <button
             onClick={handleCancel}
             disabled={isLoading}
-            className="flex-1 bg-gray-600 text-white font-semibold py-2 px-3 rounded-xl hover:bg-gray-700 disabled:opacity-50 transition-all text-sm"
+            className="flex-1 border-2 border-gray-300 text-gray-700 font-bold py-3 px-4 rounded-xl hover:border-red-500 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 transition-all"
           >
-            {isLoading ? "..." : "Cancelar Propuesta"}
+            {isLoading ? "Cancelando..." : "Cancelar Propuesta"}
           </button>
         )}
 
@@ -338,7 +351,7 @@ export function ExchangeCard({
             {!showValidationCode ? (
               <button
                 onClick={() => setShowValidationCode(true)}
-                className="flex-1 bg-purple-600 text-white font-semibold py-2 px-3 rounded-xl hover:bg-purple-700 transition-all text-sm"
+                className="flex-1 bg-gradient-to-r from-brand-primary to-brand-dark text-white font-bold py-3 px-4 rounded-xl hover:from-brand-dark hover:to-brand-primary transition-all shadow-md hover:shadow-xl"
               >
                 Validar Código
               </button>
@@ -347,7 +360,7 @@ export function ExchangeCard({
               <button
                 onClick={handleCancel}
                 disabled={isLoading}
-                className="flex-1 bg-gray-300 text-gray-700 font-bold py-2 px-3 rounded-xl hover:bg-gray-400 disabled:opacity-50 transition-colors text-sm"
+                className="flex-1 border-2 border-gray-300 text-gray-700 font-bold py-3 px-4 rounded-xl hover:border-red-500 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 transition-all"
               >
                 Cancelar
               </button>
@@ -369,6 +382,75 @@ export function ExchangeCard({
           </div>
         )}
       </div>
+
+      {/* Modal para seleccionar franja horaria (al aceptar) */}
+      {showTimeWindowModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">Selecciona la hora de intercambio</h3>
+            <p className="text-gray-600 mb-6">Elige cuándo realizarás el intercambio</p>
+            
+            <div className="space-y-2 max-h-64 overflow-y-auto mb-6">
+              {exchange.packRequested?.pickupWindows?.map((window) => (
+                <label
+                  key={window}
+                  className={cn(
+                    "flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all",
+                    selectedTimeWindow === window 
+                      ? "border-brand-primary bg-brand-light shadow-md" 
+                      : "border-gray-200 bg-white hover:border-brand-primary/50 hover:bg-gray-50"
+                  )}
+                >
+                  <input
+                    type="radio"
+                    name="timeWindowSelect"
+                    value={window}
+                    checked={selectedTimeWindow === window}
+                    onChange={(e) => setSelectedTimeWindow(e.target.value)}
+                    className="w-5 h-5 text-brand-primary focus:ring-brand-primary"
+                  />
+                  <div className="flex-1">
+                    <span className="font-semibold text-base">{window}</span>
+                  </div>
+                  {selectedTimeWindow === window && (
+                    <svg className="w-5 h-5 text-brand-primary" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+                    </svg>
+                  )}
+                </label>
+              ))}
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowTimeWindowModal(false)
+                  setSelectedTimeWindow("")
+                }}
+                disabled={isLoading}
+                className="flex-1 border-2 border-gray-300 text-gray-700 font-bold py-3 rounded-xl hover:border-gray-400 hover:bg-gray-50 disabled:opacity-50 transition-all"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirmAccept}
+                disabled={!selectedTimeWindow || isLoading}
+                className="flex-1 bg-brand-primary text-white font-bold py-3 rounded-xl hover:bg-brand-dark disabled:opacity-50 transition-all shadow-md hover:shadow-lg"
+              >
+                {isLoading ? "Aceptando..." : "Confirmar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast notifications */}
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={hideToast}
+      />
     </div>
   )
 }
