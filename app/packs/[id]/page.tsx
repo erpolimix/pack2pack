@@ -314,64 +314,53 @@ export default function PackDetailPage() {
                 </div>
             </div>
 
-            {/* Seller Info & Ratings Section */}
+            {/* Seller Info & Ratings Section - Unified */}
             {pack && (
-                <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
-                    {/* Seller Card */}
-                    <div className="md:col-span-1">
-                        <Card className="p-6">
-                            <h3 className="text-lg font-bold text-brand-dark mb-4">Vendedor</h3>
-                            <div className="flex items-center gap-4 mb-6">
-                                <div className="w-12 h-12 rounded-full bg-brand-light flex items-center justify-center text-brand-primary font-bold">
+                <div className="mt-12">
+                    <Card className="p-6">
+                        {/* Header: Seller Info */}
+                        <div className="flex items-center justify-between mb-6 pb-6 border-b">
+                            <div className="flex items-center gap-4">
+                                <div className="w-14 h-14 rounded-full bg-brand-light flex items-center justify-center text-brand-primary font-bold text-xl">
                                     {pack.sellerName.charAt(0)}
                                 </div>
                                 <div>
-                                    <Link href={`/profile?view=${pack.seller_id}`} className="font-semibold text-brand-dark hover:text-brand-primary transition-colors">
+                                    <h3 className="text-lg font-bold text-brand-dark mb-1">
                                         {pack.sellerName}
-                                    </Link>
+                                    </h3>
+                                    {sellerRatingStats && sellerRatingStats.totalRatings > 0 && (
+                                        <div className="flex items-center gap-2">
+                                            <Star className="h-4 w-4 fill-brand-primary text-brand-primary" />
+                                            <span className="font-semibold text-brand-primary">
+                                                {sellerRatingStats.averageRating.toFixed(1)}
+                                            </span>
+                                            <span className="text-sm text-gray-600">
+                                                ({sellerRatingStats.totalRatings} {sellerRatingStats.totalRatings === 1 ? 'valoración' : 'valoraciones'})
+                                            </span>
+                                        </div>
+                                    )}
+                                    {(!sellerRatingStats || sellerRatingStats.totalRatings === 0) && (
+                                        <p className="text-sm text-gray-500">Sin valoraciones aún</p>
+                                    )}
                                 </div>
                             </div>
-                            
-                            {/* Quick Rating Summary */}
-                            {sellerRatingStats && (
-                                <div className="bg-brand-light rounded-lg p-4 mb-4">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <Star className="h-5 w-5 fill-brand-primary text-brand-primary" />
-                                        <span className="text-lg font-bold text-brand-primary">
-                                            {sellerRatingStats.averageRating.toFixed(1)}
-                                        </span>
-                                    </div>
-                                    <p className="text-sm text-gray-600">
-                                        {sellerRatingStats.totalRatings} {sellerRatingStats.totalRatings === 1 ? 'valoración' : 'valoraciones'}
-                                    </p>
-                                </div>
-                            )}
-                            
                             <Link href={`/profile?view=${pack.seller_id}`}>
-                                <Button variant="outline" className="w-full rounded-xl">
+                                <Button variant="outline" className="rounded-xl">
                                     Ver Perfil
                                 </Button>
                             </Link>
-                        </Card>
-                    </div>
-
-                    {/* Ratings Display */}
-                    {sellerRatingStats && (
-                        <div className="md:col-span-2">
-                            <Card className="p-6">
-                                <h3 className="text-lg font-bold text-brand-dark mb-4 flex items-center gap-2">
-                                    <Star className="h-5 w-5 fill-brand-primary text-brand-primary" />
-                                    Valoraciones del Vendedor
-                                </h3>
-                                <RatingsDisplay
-                                    ratings={sellerRatings}
-                                    averageRating={sellerRatingStats.averageRating}
-                                    totalRatings={sellerRatingStats.totalRatings}
-                                    ratingDistribution={sellerRatingStats.ratingDistribution}
-                                />
-                            </Card>
                         </div>
-                    )}
+
+                        {/* Ratings Display */}
+                        {sellerRatingStats && sellerRatingStats.totalRatings > 0 && (
+                            <RatingsDisplay
+                                ratings={sellerRatings}
+                                averageRating={sellerRatingStats.averageRating}
+                                totalRatings={sellerRatingStats.totalRatings}
+                                ratingDistribution={sellerRatingStats.ratingDistribution}
+                            />
+                        )}
+                    </Card>
                 </div>
             )}
 
