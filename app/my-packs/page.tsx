@@ -15,8 +15,11 @@ export default function MyPacksPage() {
     const [loading, setLoading] = useState(true)
     const [user, setUser] = useState<any>(null)
     const [isModalOpen, setIsModalOpen] = useState(false)
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
     const [packToMarkSold, setPackToMarkSold] = useState<string | null>(null)
+    const [packToDelete, setPackToDelete] = useState<string | null>(null)
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
+    const [isDeleting, setIsDeleting] = useState(false)
     const [toast, setToast] = useState<{ message: string; type: "success" | "error"; isVisible: boolean }>({
         message: "",
         type: "success",
@@ -69,6 +72,30 @@ export default function MyPacksPage() {
                 setIsUpdatingStatus(false)
                 setIsModalOpen(false)
                 setPackToMarkSold(null)
+            }
+        }
+    }
+
+    const handleDelete = (packId: string) => {
+        setPackToDelete(packId)
+        setIsDeleteModalOpen(true)
+    }
+
+    const handleConfirmDelete = async () => {
+        if (packToDelete) {
+            setIsDeleting(true)
+            try {
+                await packService.deletePack(packToDelete)
+                setPacks(packs.filter((pack) => pack.id !== packToDelete))
+                showToast("Pack eliminado correctamente", "success")
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : "Error desconocido"
+                console.error("Error deleting pack:", error)
+                showToast(`Error: ${errorMessage}`, "error")
+            } finally {
+                setIsDeleting(false)
+                setIsDeleteModalOpen(false)
+                setPackToDelete(null)
             }
         }
     }
@@ -155,6 +182,7 @@ export default function MyPacksPage() {
                                     key={pack.id}
                                     pack={pack}
                                     onMarkSold={handleMarkAsSold}
+                                    onDelete={handleDelete}
                                 />
                             ))}
                         </div>
@@ -162,7 +190,7 @@ export default function MyPacksPage() {
                 )}
             </div>
 
-            {/* Confirmation Modal */}
+            {/* Confirmation Modal - Mark as Sold */}
             <Modal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
@@ -171,6 +199,17 @@ export default function MyPacksPage() {
                 description="¿Estás seguro de que quieres marcar este pack como vendido? Se ocultará de la página principal pero se mantendrá en tu historial."
                 cancelText="Cancelar"
                 confirmText={isUpdatingStatus ? "Actualizando..." : "Marcar como vendido"}
+            />
+
+            {/* Confirmation Modal - Delete */}
+            <Modal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={handleConfirmDelete}
+                title="Eliminar pack"
+                description="¿Estás seguro de que quieres eliminar este pack? Esta acción no se puede deshacer y se eliminará permanentemente."
+                cancelText="Cancelar"
+                confirmText={isDeleting ? "Eliminando..." : "Eliminar"}
             />
 
             {/* Toast Notification */}
